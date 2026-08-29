@@ -1,0 +1,34 @@
+{
+  "web": {
+    "description": "Mihomo device-side manager",
+    "read": {
+      "ubus": {
+        "mihomo.api": [
+          "status",
+          "logs",
+          "config_get",
+          "core_update_check"
+        ]
+      }
+    },
+    "write": {
+      "ubus": {
+        "mihomo.api": [
+          "service_start",
+          "service_stop",
+          "service_restart",
+          "service_set",
+          "autostart_set",
+          "transparent_set",
+          "dhcp_set",
+          "lan_ipv6_set",
+          "proxy_mode_set",
+          "config_check",
+          "config_validate",
+          "config_apply",
+          "core_update_apply"
+        ]
+      }
+    }
+  }
+}

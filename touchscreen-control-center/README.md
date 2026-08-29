@@ -1,0 +1,94 @@
+# Touchscreen control center
+
+该组件通过 `LD_PRELOAD` 扩展原厂 `zte_topsw_devui` 的 LVGL 界面，不替换原厂程序。首页增加一个“控制中心”入口：
+
+```text
+控制中心
+├── 网络仪表
+│   └── 三基带详情、趋势、流量、SIM 与模块
+├── Mihomo
+└── 设备状态
+    ├── 系统与全局流量
+    ├── 散热与风扇曲线
+    ├── Wi-Fi 功率
+    └── 一键诊断
+```
+
+状态数据每秒从本机 `zwrt-datad /state` 读取；散热、Wi-Fi 和刷新操作只向 `/control` 发送固定 action 与受约束参数。Mihomo 操作只调用 `/data/mihomo-manager/mihomo-manager.sh` 的固定子命令。
+
+## 兼容性
+
+当前只支持 root README 所列 B20 固件。原厂 UI 是固定地址、非 PIE 程序；导航按钮引用该进程中已加载的对象，安装器因此会严格核对：
+
+```text
+zte_topsw_devui SHA-256:
+a5d40b1c65acd5fb74f207d4d0a37b879a36073dcff9b1a33fb2a3b08d7a66a5
+```
+
+哈希不匹配时不要修改安装器跳过保护。新固件需要重新审计 LVGL ABI、对象地址、生命周期和恢复路径。
+
+仓库不含任何 ZTE 二进制、共享库、字体或图像。上传/下载箭头由本项目运行时生成；信号图标只引用设备已有 `/usr/ui/skin` 路径。
+
+## 依赖
+
+- root ADB；
+- AArch64 musl 交叉编译器；
+- 设备端 `zwrt-datad`；
+- Mihomo 页面功能需要 `mihomo-manager`，其他页面可独立使用。
+
+## 编译
+
+```sh
+CC=aarch64-linux-musl-gcc ./build.sh
+```
+
+也可使用自备容器中的 musl 工具链。输出为 `touchui-hook.so`。
+
+所有 `.inc` 都属于同一个 C translation unit，最终仍只有一个注入库和一个原厂 UI 进程。
+
+## 安装
+
+```sh
+./install.sh
+```
+
+如果目录中没有 `touchui-hook.so`，安装器会先调用 `build.sh`。安装过程会：
+
+1. 核对原厂 UI 哈希；
+2. 部署注入库、监督脚本和 init 服务；
+3. 写入可重复安装、可完整删除的 `rc.local` 兜底块；
+4. 验证只有一个 UI 进程、注入库已映射且监督进程存活；
+5. 注入失败时恢复原厂 procd 服务。
+
+## 验证
+
+设备端状态：
+
+```sh
+/etc/init.d/touchscreen-control-center status
+```
+
+一次性全页面自检：
+
+```sh
+adb shell 'touch /tmp/touchui-selftest'
+```
+
+自检通常约 20 秒；锁屏或 LCD 关闭时原厂会降低 LVGL timer 频率，最长可能接近 60 秒。完成标记写入 `/tmp/touchui-create.log`。
+
+## 卸载
+
+```sh
+./uninstall.sh --check
+./uninstall.sh
+```
+
+卸载会移除本组件的服务、启动块和数据目录，并恢复原厂 UI；不会停止 Mihomo、修改网络配置或删除 `zwrt-datad`。
+
+## 实现说明
+
+- UI 对象只在原厂 UI 线程创建、更新和延迟删除；
+- 网络、Mihomo 和设备状态页面互斥加载，避免耗尽原厂 LVGL 对象池；
+- `/state` 使用一个 64 KiB 缓冲区，工作线程显式使用 256 KiB 栈；
+- 切页和锁屏会清理对象指针、页面状态和刷新 generation，避免访问已释放对象；
+- 三基带槽位编号只在展示层转换，不改写 `zwrt-datad` 原始值。

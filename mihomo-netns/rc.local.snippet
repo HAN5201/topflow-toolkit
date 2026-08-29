@@ -1,0 +1,5 @@
+# Start the procd-managed Mihomo namespace service when it is enabled.
+if [ -x /etc/init.d/mihomo-netns ] \
+    && /etc/init.d/mihomo-netns enabled >/dev/null 2>&1; then
+    /etc/init.d/mihomo-netns start
+fi

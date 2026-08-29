@@ -1,0 +1,39 @@
+mixed-port: 7890
+allow-lan: true
+bind-address: "*"
+mode: rule
+log-level: info
+ipv6: false
+
+external-controller: 0.0.0.0:9090
+# Replace this value before installation.
+secret: change-this-controller-secret
+
+interface-name: mh-uplink
+
+tun:
+  enable: true
+  device: mihomo0
+  stack: mixed
+  auto-route: true
+  auto-redirect: true
+  dns-hijack:
+    - any:53
+  route-exclude-address:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  enhanced-mode: fake-ip
+  nameserver:
+    - 223.5.5.5
+    - 1.1.1.1
+
+proxies: []
+proxy-groups: []
+
+rules:
+  - MATCH,DIRECT

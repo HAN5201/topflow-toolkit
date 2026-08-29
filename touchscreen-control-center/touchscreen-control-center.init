@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+# shellcheck disable=SC2034
+
+START=60
+STOP=05
+
+CONTROL_CENTER_DIR=/data/touchscreen-control-center
+
+start() {
+    "$CONTROL_CENTER_DIR/start.sh"
+}
+
+stop() {
+    if [ -x "$CONTROL_CENTER_DIR/restore-stock.sh" ]; then
+        "$CONTROL_CENTER_DIR/restore-stock.sh"
+    fi
+}
+
+restart() {
+    stop
+    start
+}
+
+status() {
+    pids="$(pidof zte_topsw_devui)"
+    set -- $pids
+    [ "$#" -eq 1 ] || {
+        echo "touchscreen control center is not running"
+        return 3
+    }
+    if grep -q "$CONTROL_CENTER_DIR/touchui-hook.so" "/proc/$1/maps" 2>/dev/null; then
+        echo "touchscreen control center is running: $1"
+        return 0
+    fi
+    echo "stock touchscreen UI is running: $1"
+    return 3
+}
+
+EXTRA_COMMANDS="status"
+EXTRA_HELP="        status  Show injected or stock touchscreen UI state"

@@ -1,0 +1,13 @@
+mixed-port: 17911
+allow-lan: false
+mode: rule
+log-level: silent
+rule-providers:
+  reject:
+    type: file
+    behavior: domain
+    format: yaml
+    path: ./reject.yaml
+rules:
+  - RULE-SET,reject,REJECT
+  - MATCH,DIRECT

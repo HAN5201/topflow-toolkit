@@ -1,0 +1,109 @@
+#!/bin/sh
+# shellcheck disable=SC2154
+
+. /usr/share/libubox/jshn.sh
+
+MANAGER=/data/mihomo-manager/mihomo-manager.sh
+
+signature_empty() {
+    json_add_object "$1"
+    json_close_object
+}
+
+case "$1" in
+    list)
+        json_init
+        signature_empty status
+        signature_empty service_start
+        signature_empty service_stop
+        signature_empty service_restart
+        json_add_object service_set
+        json_add_boolean enabled 0
+        json_close_object
+        signature_empty config_check
+        signature_empty config_get
+        signature_empty core_update_check
+        signature_empty core_update_apply
+        json_add_object config_validate
+        json_add_string content ""
+        json_close_object
+        json_add_object config_apply
+        json_add_string content ""
+        json_close_object
+        json_add_object autostart_set
+        json_add_boolean enabled 0
+        json_close_object
+        json_add_object transparent_set
+        json_add_boolean enabled 0
+        json_close_object
+        json_add_object dhcp_set
+        json_add_boolean enabled 0
+        json_close_object
+        json_add_object lan_ipv6_set
+        json_add_boolean disabled 0
+        json_close_object
+        json_add_object proxy_mode_set
+        json_add_string mode ""
+        json_close_object
+        json_add_object logs
+        json_add_int lines 0
+        json_close_object
+        json_dump
+        ;;
+    call)
+        method="$2"
+        read -r input
+        json_load "${input:-{}}"
+        case "$method" in
+            status) exec "$MANAGER" status ;;
+            service_start) exec "$MANAGER" service-start ;;
+            service_stop) exec "$MANAGER" service-stop ;;
+            service_restart) exec "$MANAGER" service-restart ;;
+            service_set)
+                json_get_var enabled enabled
+                [ "${enabled:-0}" = 1 ] && enabled=true || enabled=false
+                exec "$MANAGER" service-set "$enabled"
+                ;;
+            config_check) exec "$MANAGER" config-check ;;
+            config_get) exec "$MANAGER" config-get ;;
+            core_update_check) exec "$MANAGER" core-update-check ;;
+            core_update_apply) exec "$MANAGER" core-update-apply ;;
+            config_validate)
+                json_get_var content content
+                printf '%s' "$content" | "$MANAGER" config-validate
+                ;;
+            config_apply)
+                json_get_var content content
+                printf '%s' "$content" | "$MANAGER" config-apply
+                ;;
+            autostart_set)
+                json_get_var enabled enabled
+                [ "${enabled:-0}" = 1 ] && enabled=true || enabled=false
+                exec "$MANAGER" autostart-set "$enabled"
+                ;;
+            transparent_set)
+                json_get_var enabled enabled
+                [ "${enabled:-0}" = 1 ] && enabled=true || enabled=false
+                exec "$MANAGER" transparent-set "$enabled"
+                ;;
+            dhcp_set)
+                json_get_var enabled enabled
+                [ "${enabled:-0}" = 1 ] && enabled=true || enabled=false
+                exec "$MANAGER" dhcp-set "$enabled"
+                ;;
+            lan_ipv6_set)
+                json_get_var disabled disabled
+                [ "${disabled:-0}" = 1 ] && disabled=true || disabled=false
+                exec "$MANAGER" lan-ipv6-set "$disabled"
+                ;;
+            proxy_mode_set)
+                json_get_var mode mode
+                exec "$MANAGER" proxy-mode-set "$mode"
+                ;;
+            logs)
+                json_get_var lines lines
+                exec "$MANAGER" logs "${lines:-120}"
+                ;;
+        esac
+        ;;
+esac

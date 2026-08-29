@@ -1,0 +1,72 @@
+#!/bin/sh /etc/rc.common
+# shellcheck disable=SC2034
+
+START=11
+STOP=89
+
+BASE=/data/mihomo-manager
+RPCD_SOURCE="$BASE/rpcd"
+ACL_SOURCE="$BASE/acl.d"
+JS_SOURCE="$BASE/web/js-auth-adm"
+TMPL_SOURCE="$BASE/web/tmpl-auth-adm"
+INDEX_SOURCE="$BASE/web-root/index.html"
+MENU_SOURCE="$BASE/web-root/menu.js"
+
+is_mounted() {
+    grep -q " $1 " /proc/mounts 2>/dev/null
+}
+
+sync_stock() {
+    mkdir -p "$RPCD_SOURCE" "$ACL_SOURCE" "$JS_SOURCE" "$TMPL_SOURCE"
+
+    if ! is_mounted /usr/libexec/rpcd; then
+        cp -a /usr/libexec/rpcd/. "$RPCD_SOURCE/" 2>/dev/null || true
+    fi
+    if ! is_mounted /usr/share/rpcd/acl.d; then
+        cp -a /usr/share/rpcd/acl.d/. "$ACL_SOURCE/" 2>/dev/null || true
+    fi
+    if ! is_mounted /usr/zte_web/web/js/auth/adm; then
+        cp -a /usr/zte_web/web/js/auth/adm/. "$JS_SOURCE/" 2>/dev/null || true
+    fi
+    if ! is_mounted /usr/zte_web/web/tmpl/auth/adm; then
+        cp -a /usr/zte_web/web/tmpl/auth/adm/. "$TMPL_SOURCE/" 2>/dev/null || true
+    fi
+}
+
+mount_one() {
+    source="$1"
+    target="$2"
+    if [ -d "$source" ] && [ -d "$target" ] && ! is_mounted "$target"; then
+        mount --bind "$source" "$target"
+    fi
+}
+
+mount_file() {
+    source="$1"
+    target="$2"
+    if [ -f "$source" ] && [ -f "$target" ] && ! is_mounted "$target"; then
+        mount --bind "$source" "$target"
+    fi
+}
+
+start() {
+    sync_stock
+    mount_one "$RPCD_SOURCE" /usr/libexec/rpcd
+    mount_one "$ACL_SOURCE" /usr/share/rpcd/acl.d
+    mount_one "$JS_SOURCE" /usr/zte_web/web/js/auth/adm
+    mount_one "$TMPL_SOURCE" /usr/zte_web/web/tmpl/auth/adm
+    mount_file "$INDEX_SOURCE" /usr/zte_web/web/index.html
+    mount_file "$MENU_SOURCE" /usr/zte_web/web/js/config/ufi/U60Pro/menu.js
+}
+
+stop() {
+    for target in \
+        /usr/zte_web/web/js/config/ufi/U60Pro/menu.js \
+        /usr/zte_web/web/index.html \
+        /usr/zte_web/web/tmpl/auth/adm \
+        /usr/zte_web/web/js/auth/adm \
+        /usr/share/rpcd/acl.d \
+        /usr/libexec/rpcd; do
+        is_mounted "$target" && umount "$target" 2>/dev/null || true
+    done
+}

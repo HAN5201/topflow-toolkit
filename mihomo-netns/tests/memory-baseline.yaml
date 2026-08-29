@@ -1,0 +1,6 @@
+mixed-port: 17910
+allow-lan: false
+mode: rule
+log-level: silent
+rules:
+  - MATCH,DIRECT

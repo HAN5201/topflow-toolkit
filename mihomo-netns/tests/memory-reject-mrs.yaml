@@ -1,0 +1,13 @@
+mixed-port: 17912
+allow-lan: false
+mode: rule
+log-level: silent
+rule-providers:
+  reject:
+    type: file
+    behavior: domain
+    format: mrs
+    path: ./reject.mrs
+rules:
+  - RULE-SET,reject,REJECT
+  - MATCH,DIRECT

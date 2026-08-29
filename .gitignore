@@ -1,0 +1,25 @@
+.DS_Store
+.idea/
+.vscode/
+build/
+dist/
+*.o
+*.so
+*.log
+
+# Never publish device or provider material.
+private/
+vendor/
+vendor-inspection/
+config.yaml
+controller-access.txt
+providers/
+*.mmdb
+*.dat
+*.mrs
+*.gz
+*.zip
+*.tar
+*.tar.gz
+*.pcap
+*.db
