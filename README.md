@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/imshuhao/mu5252-toolkit/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/imshuhao/mu5252-toolkit/ci.yml?branch=main&amp;style=flat-square&amp;label=CI&amp;labelColor=0b0f0d&amp;color=238636" alt="CI"></a>
+  <a href="https://github.com/imshuhao/topflow-toolkit/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/imshuhao/topflow-toolkit/ci.yml?branch=main&amp;style=flat-square&amp;label=CI&amp;labelColor=0b0f0d&amp;color=238636" alt="CI"></a>
   <img src="https://img.shields.io/badge/target-MU5252%20B20-238636?style=flat-square&amp;labelColor=0b0f0d" alt="Target: MU5252 B20">
   <img src="https://img.shields.io/badge/arch-AArch64-238636?style=flat-square&amp;labelColor=0b0f0d" alt="Architecture: AArch64">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-238636?style=flat-square&amp;labelColor=0b0f0d" alt="MIT License"></a>
