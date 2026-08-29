@@ -7,13 +7,21 @@ static void safe_copy(char *dst, size_t size, const char *src)
 static int json_value(const char *json, const char *key, const char **value)
 {
     char pattern[80];
-    const char *p;
+    const char *p, *separator;
+    size_t pattern_length;
     snprintf(pattern, sizeof(pattern), "\"%s\"", key);
-    p = strstr(json, pattern);
-    if (!p || !(p = strchr(p + strlen(pattern), ':'))) return 0;
-    for (p++; *p == ' ' || *p == '\t' || *p == '\r' || *p == '\n'; p++) { }
-    *value = p;
-    return 1;
+    pattern_length = strlen(pattern);
+    for (p = json; (p = strstr(p, pattern)) != NULL; p += pattern_length) {
+        separator = p + pattern_length;
+        while (*separator == ' ' || *separator == '\t' ||
+               *separator == '\r' || *separator == '\n') separator++;
+        if (*separator != ':') continue;
+        for (separator++; *separator == ' ' || *separator == '\t' ||
+             *separator == '\r' || *separator == '\n'; separator++) { }
+        *value = separator;
+        return 1;
+    }
+    return 0;
 }
 
 static int json_bool(const char *json, const char *key, int fallback)

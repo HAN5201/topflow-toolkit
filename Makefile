@@ -34,6 +34,9 @@ touchui-check:
 	$(CC) -shared -fPIC -Os -Wall -Wextra -Werror \
 		$(TOUCH_LDFLAGS) \
 		-o $(BUILD_DIR)/touchui-hook.so $(TOUCH_DIR)/touchui-hook.c $(TOUCH_LIBS)
+	$(CC) -std=c11 -Os -Wall -Wextra -Werror -Wno-unused-function \
+		-o $(BUILD_DIR)/json-key-match-test $(TOUCH_DIR)/tests/json-key-match.c
+	$(BUILD_DIR)/json-key-match-test
 
 clean:
 	@find $(BUILD_DIR) -type f -delete 2>/dev/null || true
