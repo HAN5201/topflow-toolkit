@@ -76,6 +76,19 @@ adb shell 'touch /tmp/touchui-selftest'
 
 自检通常约 20 秒；锁屏或 LCD 关闭时原厂会降低 LVGL timer 频率，最长可能接近 60 秒。完成标记写入 `/tmp/touchui-create.log`。
 
+## 截图
+
+设备不提供 Android `screencap` 或传统 framebuffer。宿主机脚本会通过 root ADB
+只读抓取 QPIC DRM 当前帧，并将 `320×480` RGB565 数据转换为 PNG：
+
+```sh
+./capture-screen.sh
+./capture-screen.sh /path/to/screen.png
+```
+
+需要宿主机安装 `adb` 和 `ffmpeg`。脚本会核对单一 UI 进程、DRM 格式、双缓冲映射、
+完整帧长度以及抓取前后的活动 framebuffer；不会写显存或改变屏幕状态。
+
 ## 卸载
 
 ```sh
