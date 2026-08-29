@@ -1,134 +1,150 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
-  <title id="title">ZTE TopFlow MU5252 Toolkit</title>
-  <desc id="desc">A dark technical banner for ZTE TopFlow MU5252 showing three cellular links connected to an OpenWrt control plane, Mihomo namespace, native WebUI and LVGL touchscreen.</desc>
+  <title id="title">ZTE TopFlow Toolkit</title>
+  <desc id="desc">A dark technical banner showing three cellular paths flowing into an on-device control plane and out to Mihomo, the native WebUI, and the LVGL touchscreen.</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#050806"/>
-      <stop offset="0.56" stop-color="#09110d"/>
-      <stop offset="1" stop-color="#050706"/>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#040706"/>
+      <stop offset=".52" stop-color="#07100c"/>
+      <stop offset="1" stop-color="#050806"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#4ade80"/>
       <stop offset="1" stop-color="#2dd4bf"/>
     </linearGradient>
-    <linearGradient id="device" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#151b18"/>
-      <stop offset="1" stop-color="#0b0f0d"/>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#131a16"/>
+      <stop offset="1" stop-color="#0a0e0c"/>
     </linearGradient>
+    <radialGradient id="halo">
+      <stop offset="0" stop-color="#34d399" stop-opacity=".13"/>
+      <stop offset="1" stop-color="#34d399" stop-opacity="0"/>
+    </radialGradient>
     <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
-      <path d="M36 0H0V36" fill="none" stroke="#8ba096" stroke-opacity=".055"/>
+      <path d="M36 0H0V36" fill="none" stroke="#8ba096" stroke-opacity=".052"/>
     </pattern>
-    <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
-      <feGaussianBlur stdDeviation="5"/>
+    <filter id="glow" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="7"/>
     </filter>
   </defs>
 
-  <rect width="1200" height="520" rx="30" fill="url(#bg)"/>
+  <rect width="1200" height="520" rx="30" fill="url(#background)"/>
   <rect x="1" y="1" width="1198" height="518" rx="29" fill="none" stroke="#29332e"/>
   <rect width="1200" height="520" rx="30" fill="url(#grid)"/>
+  <circle cx="815" cy="258" r="285" fill="url(#halo)"/>
 
   <g font-family="Inter, SF Pro Display, Segoe UI, sans-serif">
-    <g transform="translate(74 72)">
-      <rect width="160" height="29" rx="14.5" fill="#13231a" stroke="#244d35"/>
-      <circle cx="17" cy="14.5" r="4" fill="#4ade80"/>
-      <text x="30" y="19" fill="#9ee9b8" font-size="12" font-weight="600" letter-spacing="1.4">ZTE TopFlow</text>
+    <g transform="translate(72 66)">
+      <g>
+        <rect width="196" height="30" rx="15" fill="#111d16" stroke="#29513a"/>
+        <circle cx="18" cy="15" r="4.5" fill="#4ade80"/>
+        <path d="M31 11h16M31 15h25M31 19h11" stroke="#63d990" stroke-width="1.5" stroke-linecap="round"/>
+        <text x="67" y="20" fill="#a1e8ba" font-size="11" font-weight="650" letter-spacing="1.55">DEVICE PLATFORM</text>
+      </g>
 
-      <text x="0" y="112" fill="#f4f7f5" font-size="72" font-weight="700" letter-spacing="-3">MU5252</text>
-      <text x="0" y="174" fill="url(#accent)" font-size="58" font-weight="650" letter-spacing="-2.2">Toolkit</text>
+      <text x="2" y="89" fill="#8a9a91" font-size="22" font-weight="650" letter-spacing="7">ZTE</text>
+      <text x="0" y="164" fill="#f2f6f3" font-size="76" font-weight="700" letter-spacing="-3.2">TopFlow</text>
+      <text x="2" y="220" fill="url(#brand)" font-size="47" font-weight="650" letter-spacing="-1.5">Toolkit</text>
 
-      <text x="2" y="230" fill="#a7b2ac" font-size="19">Three cellular paths. One control plane.</text>
-      <text x="2" y="260" fill="#a7b2ac" font-size="19">Inspect. Route. Control. Recover.</text>
+      <text x="3" y="276" fill="#a8b4ad" font-size="18">Three cellular paths. One device.</text>
+      <text x="3" y="305" fill="#a8b4ad" font-size="18">Observe. Route. Control. Recover.</text>
 
-      <g transform="translate(0 308)" font-size="11" font-weight="650" letter-spacing="1.25">
+      <g transform="translate(2 346)" font-size="10.5" font-weight="650" letter-spacing="1.25">
         <g>
-          <rect width="105" height="34" rx="9" fill="#101713" stroke="#2b3a32"/>
-          <text x="52.5" y="22" fill="#d5ddd8" text-anchor="middle">MULTI-WAN</text>
+          <rect width="94" height="34" rx="9" fill="#0d1310" stroke="#2d3b33"/>
+          <text x="47" y="22" fill="#d7ded9" text-anchor="middle">MULTI-WAN</text>
         </g>
-        <g transform="translate(116)">
-          <rect width="83" height="34" rx="9" fill="#101713" stroke="#2b3a32"/>
-          <text x="41.5" y="22" fill="#d5ddd8" text-anchor="middle">MIHOMO</text>
+        <g transform="translate(105)">
+          <rect width="80" height="34" rx="9" fill="#0d1310" stroke="#2d3b33"/>
+          <text x="40" y="22" fill="#d7ded9" text-anchor="middle">MIHOMO</text>
         </g>
-        <g transform="translate(210)">
-          <rect width="75" height="34" rx="9" fill="#101713" stroke="#2b3a32"/>
-          <text x="37.5" y="22" fill="#d5ddd8" text-anchor="middle">LVGL</text>
+        <g transform="translate(196)">
+          <rect width="67" height="34" rx="9" fill="#0d1310" stroke="#2d3b33"/>
+          <text x="33.5" y="22" fill="#d7ded9" text-anchor="middle">LVGL</text>
         </g>
-        <g transform="translate(296)">
-          <rect width="97" height="34" rx="9" fill="#101713" stroke="#2b3a32"/>
-          <text x="48.5" y="22" fill="#d5ddd8" text-anchor="middle">RECOVERY</text>
+        <g transform="translate(274)">
+          <rect width="92" height="34" rx="9" fill="#0d1310" stroke="#2d3b33"/>
+          <text x="46" y="22" fill="#d7ded9" text-anchor="middle">RECOVERY</text>
         </g>
       </g>
     </g>
 
-    <g transform="translate(572 53)">
-      <path d="M70 80V114M222 80V114M374 80V114" stroke="#44534b" stroke-width="2"/>
-      <path d="M70 114H374" stroke="#44534b" stroke-width="2"/>
-      <path d="M222 114V143" stroke="url(#accent)" stroke-width="3"/>
-      <circle cx="222" cy="114" r="5" fill="#4ade80"/>
-      <circle cx="222" cy="114" r="12" fill="#4ade80" opacity=".14" filter="url(#glow)"/>
+    <g transform="translate(548 48)">
+      <text x="0" y="13" fill="#708078" font-size="10.5" font-weight="650" letter-spacing="1.9">THREE CELLULAR PATHS</text>
 
-      <g font-size="12" font-weight="650">
+      <g transform="translate(0 31)" font-size="12" font-weight="650">
         <g>
-          <rect width="140" height="80" rx="14" fill="#0d1310" stroke="#314138"/>
-          <circle cx="19" cy="20" r="5" fill="#4ade80"/>
-          <text x="32" y="24" fill="#dce4df">X75</text>
-          <text x="17" y="54" fill="#7f9187" font-size="11" letter-spacing="1.4">5G MODEM</text>
-          <path d="M101 55h7v-8h5v8h7V36h5v19h7" fill="none" stroke="#4ade80" stroke-width="2"/>
+          <rect width="150" height="78" rx="14" fill="#0c1210" stroke="#314139"/>
+          <circle cx="20" cy="21" r="5" fill="#4ade80"/>
+          <text x="33" y="25" fill="#e1e7e3">X75</text>
+          <text x="18" y="55" fill="#7d8c84" font-size="10.5" letter-spacing="1.4">5G PATH</text>
+          <path d="M108 57h7v-8h5v8h7V37h5v20h7" fill="none" stroke="#4ade80" stroke-width="2"/>
         </g>
-        <g transform="translate(152)">
-          <rect width="140" height="80" rx="14" fill="#0d1310" stroke="#314138"/>
-          <circle cx="19" cy="20" r="5" fill="#4ade80"/>
-          <text x="32" y="24" fill="#dce4df">V3E2</text>
-          <text x="17" y="54" fill="#7f9187" font-size="11" letter-spacing="1.4">4G MODEM 1</text>
-          <path d="M101 55h7v-8h5v8h7V42h5v13h7" fill="none" stroke="#4ade80" stroke-width="2"/>
+        <g transform="translate(162)">
+          <rect width="150" height="78" rx="14" fill="#0c1210" stroke="#314139"/>
+          <circle cx="20" cy="21" r="5" fill="#4ade80"/>
+          <text x="33" y="25" fill="#e1e7e3">V3E2</text>
+          <text x="18" y="55" fill="#7d8c84" font-size="10.5" letter-spacing="1.4">4G PATH 1</text>
+          <path d="M108 57h7v-8h5v8h7V43h5v14h7" fill="none" stroke="#4ade80" stroke-width="2"/>
         </g>
-        <g transform="translate(304)">
-          <rect width="140" height="80" rx="14" fill="#0d1310" stroke="#314138"/>
-          <circle cx="19" cy="20" r="5" fill="#4ade80"/>
-          <text x="32" y="24" fill="#dce4df">V3E1</text>
-          <text x="17" y="54" fill="#7f9187" font-size="11" letter-spacing="1.4">4G MODEM 2</text>
-          <path d="M101 55h7v-8h5v8h7V47h5v8h7" fill="none" stroke="#4ade80" stroke-width="2"/>
+        <g transform="translate(324)">
+          <rect width="150" height="78" rx="14" fill="#0c1210" stroke="#314139"/>
+          <circle cx="20" cy="21" r="5" fill="#4ade80"/>
+          <text x="33" y="25" fill="#e1e7e3">V3E1</text>
+          <text x="18" y="55" fill="#7d8c84" font-size="10.5" letter-spacing="1.4">4G PATH 2</text>
+          <path d="M108 57h7v-8h5v8h7V48h5v9h7" fill="none" stroke="#4ade80" stroke-width="2"/>
         </g>
       </g>
 
-      <g transform="translate(34 143)">
-        <rect width="376" height="151" rx="22" fill="url(#device)" stroke="#3a4b42"/>
-        <rect x="16" y="16" width="344" height="119" rx="14" fill="#080b09" stroke="#222b26"/>
-        <text x="31" y="47" fill="#75867c" font-size="11" font-weight="650" letter-spacing="1.6">DEVICE CONTROL PLANE</text>
-        <text x="31" y="80" fill="#edf2ef" font-size="24" font-weight="650">OpenWrt · B20</text>
-        <rect x="31" y="98" width="91" height="20" rx="10" fill="#14241a"/>
-        <text x="76.5" y="112" fill="#7ee2a1" font-size="10" font-weight="650" text-anchor="middle">OBSERVABLE</text>
-        <rect x="130" y="98" width="94" height="20" rx="10" fill="#14241a"/>
-        <text x="177" y="112" fill="#7ee2a1" font-size="10" font-weight="650" text-anchor="middle">REVERSIBLE</text>
-        <g transform="translate(278 40)">
+      <path d="M75 109v32M237 109v32M399 109v32M75 141h324M237 141v29" fill="none" stroke="#415149" stroke-width="2"/>
+      <circle cx="237" cy="141" r="14" fill="#4ade80" opacity=".12" filter="url(#glow)"/>
+      <circle cx="237" cy="141" r="5" fill="#4ade80"/>
+
+      <g transform="translate(31 170)">
+        <rect width="412" height="150" rx="23" fill="url(#panel)" stroke="#3b4c43"/>
+        <rect x="16" y="16" width="380" height="118" rx="15" fill="#080b09" stroke="#222b26"/>
+        <text x="32" y="47" fill="#788980" font-size="10.5" font-weight="650" letter-spacing="1.7">ON-DEVICE CONTROL PLANE</text>
+        <text x="32" y="80" fill="#eef3ef" font-size="25" font-weight="650">OpenWrt · B20</text>
+        <g transform="translate(32 98)" font-size="9.5" font-weight="650">
+          <rect width="73" height="20" rx="10" fill="#13251a"/>
+          <text x="36.5" y="14" fill="#7fe3a2" text-anchor="middle">OBSERVE</text>
+          <g transform="translate(82)">
+            <rect width="61" height="20" rx="10" fill="#13251a"/>
+            <text x="30.5" y="14" fill="#7fe3a2" text-anchor="middle">ROUTE</text>
+          </g>
+          <g transform="translate(152)">
+            <rect width="72" height="20" rx="10" fill="#13251a"/>
+            <text x="36" y="14" fill="#7fe3a2" text-anchor="middle">CONTROL</text>
+          </g>
+        </g>
+        <g transform="translate(322 42)">
           <circle cx="24" cy="24" r="24" fill="#102219" stroke="#295b3d"/>
           <path d="M13 24l7 7 15-17" fill="none" stroke="#4ade80" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
         </g>
       </g>
 
-      <path d="M110 294V329M222 294V329M334 294V329" stroke="#44534b" stroke-width="2"/>
-      <path d="M110 329H334" stroke="#44534b" stroke-width="2"/>
+      <path d="M106 320v32M237 320v32M368 320v32M106 352h262" fill="none" stroke="#415149" stroke-width="2"/>
 
-      <g transform="translate(0 329)" font-size="11" font-weight="650">
+      <g transform="translate(0 352)" font-size="11" font-weight="650">
         <g>
-          <rect width="140" height="83" rx="14" fill="#0d1310" stroke="#314138"/>
-          <text x="17" y="28" fill="#e0e6e2">MIHOMO NETNS</text>
-          <text x="17" y="51" fill="#718178" font-size="10">TRANSPARENT IPv4</text>
-          <path d="M17 65H123" stroke="#203128"/>
-          <circle cx="119" cy="65" r="3" fill="#2dd4bf"/>
+          <rect width="150" height="83" rx="14" fill="#0c1210" stroke="#314139"/>
+          <text x="18" y="29" fill="#e0e6e2">MIHOMO</text>
+          <text x="18" y="52" fill="#718178" font-size="10">ISOLATED NETNS</text>
+          <path d="M18 66h114" stroke="#203128"/>
+          <circle cx="128" cy="66" r="3" fill="#2dd4bf"/>
         </g>
-        <g transform="translate(152)">
-          <rect width="140" height="83" rx="14" fill="#0d1310" stroke="#314138"/>
-          <text x="17" y="28" fill="#e0e6e2">NATIVE WEBUI</text>
-          <text x="17" y="51" fill="#718178" font-size="10">STATUS · CONFIG</text>
-          <path d="M17 65H123" stroke="#203128"/>
-          <circle cx="119" cy="65" r="3" fill="#2dd4bf"/>
+        <g transform="translate(162)">
+          <rect width="150" height="83" rx="14" fill="#0c1210" stroke="#314139"/>
+          <text x="18" y="29" fill="#e0e6e2">NATIVE WEBUI</text>
+          <text x="18" y="52" fill="#718178" font-size="10">STATUS · CONFIG</text>
+          <path d="M18 66h114" stroke="#203128"/>
+          <circle cx="128" cy="66" r="3" fill="#2dd4bf"/>
         </g>
-        <g transform="translate(304)">
-          <rect width="140" height="83" rx="14" fill="#0d1310" stroke="#314138"/>
-          <text x="17" y="28" fill="#e0e6e2">LVGL TOUCH UI</text>
-          <text x="17" y="51" fill="#718178" font-size="10">LIVE CONTROL</text>
-          <path d="M17 65H123" stroke="#203128"/>
-          <circle cx="119" cy="65" r="3" fill="#2dd4bf"/>
+        <g transform="translate(324)">
+          <rect width="150" height="83" rx="14" fill="#0c1210" stroke="#314139"/>
+          <text x="18" y="29" fill="#e0e6e2">LVGL TOUCH UI</text>
+          <text x="18" y="52" fill="#718178" font-size="10">LIVE CONTROL</text>
+          <path d="M18 66h114" stroke="#203128"/>
+          <circle cx="128" cy="66" r="3" fill="#2dd4bf"/>
         </g>
       </g>
     </g>

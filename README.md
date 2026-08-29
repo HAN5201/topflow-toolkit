@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/readme-hero.svg" alt="ZTE TopFlow MU5252 Toolkit：三路蜂窝、Mihomo、原生 WebUI 与 LVGL 触屏控制" width="100%">
+  <img src="docs/assets/readme-hero.svg" alt="ZTE TopFlow Toolkit：三路蜂窝、Mihomo、原生 WebUI 与 LVGL 触屏控制" width="100%">
 </p>
 
 <p align="center">
