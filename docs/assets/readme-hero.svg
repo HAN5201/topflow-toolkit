@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
-  <title id="title">MU5252 Toolkit</title>
-  <desc id="desc">A dark technical banner showing three cellular links connected to an OpenWrt control plane, Mihomo namespace, native WebUI and LVGL touchscreen.</desc>
+  <title id="title">ZTE TopFlow MU5252 Toolkit</title>
+  <desc id="desc">A dark technical banner for ZTE TopFlow MU5252 showing three cellular links connected to an OpenWrt control plane, Mihomo namespace, native WebUI and LVGL touchscreen.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#050806"/>
@@ -29,9 +29,9 @@
 
   <g font-family="Inter, SF Pro Display, Segoe UI, sans-serif">
     <g transform="translate(74 72)">
-      <rect width="214" height="29" rx="14.5" fill="#13231a" stroke="#244d35"/>
+      <rect width="160" height="29" rx="14.5" fill="#13231a" stroke="#244d35"/>
       <circle cx="17" cy="14.5" r="4" fill="#4ade80"/>
-      <text x="30" y="19" fill="#9ee9b8" font-size="12" font-weight="600" letter-spacing="2.2">EDGE CONTROL TOOLKIT</text>
+      <text x="30" y="19" fill="#9ee9b8" font-size="12" font-weight="600" letter-spacing="1.4">ZTE TopFlow</text>
 
       <text x="0" y="112" fill="#f4f7f5" font-size="72" font-weight="700" letter-spacing="-3">MU5252</text>
       <text x="0" y="174" fill="url(#accent)" font-size="58" font-weight="650" letter-spacing="-2.2">Toolkit</text>

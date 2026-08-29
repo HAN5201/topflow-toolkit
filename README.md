@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/readme-hero.svg" alt="MU5252 Toolkit：三路蜂窝、Mihomo、原生 WebUI 与 LVGL 触屏控制" width="100%">
+  <img src="docs/assets/readme-hero.svg" alt="ZTE TopFlow MU5252 Toolkit：三路蜂窝、Mihomo、原生 WebUI 与 LVGL 触屏控制" width="100%">
 </p>
 
 <p align="center">
@@ -23,11 +23,28 @@
 
 ## 它能做什么
 
-| 蜂窝网络可观测 | 独立透明网关 |
-| --- | --- |
-| 同时查看 X75、V3E2、V3E1 三路基带的信号、注册、QCI、AMBR、地址、实时流量与趋势。 | Mihomo 运行在独立 network namespace 中；宿主保留原厂路由，DHCP 客户端按需接入 IPv4 透明代理。 |
-| **双端原生控制** | **设备级运维** |
-| Mihomo 管理能力接入厂商 WebUI；同一套状态与控制延伸到设备原生 LVGL 触摸屏。 | 覆盖核心与配置更新、散热曲线、Wi-Fi 功率、运行诊断、屏幕抓取、启动恢复与完整卸载。 |
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <strong>蜂窝网络可观测</strong><br><br>
+      同时查看 X75、V3E2、V3E1 三路基带的信号、注册、QCI、AMBR、地址、实时流量与趋势。
+    </td>
+    <td width="50%" valign="top">
+      <strong>独立透明网关</strong><br><br>
+      Mihomo 运行在独立 network namespace 中；宿主保留原厂路由，DHCP 客户端按需接入 IPv4 透明代理。
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <strong>双端原生控制</strong><br><br>
+      Mihomo 管理能力接入厂商 WebUI；同一套状态与控制延伸到设备原生 LVGL 触摸屏。
+    </td>
+    <td width="50%" valign="top">
+      <strong>设备级运维</strong><br><br>
+      覆盖核心与配置更新、散热曲线、Wi-Fi 功率、运行诊断、屏幕抓取、启动恢复与完整卸载。
+    </td>
+  </tr>
+</table>
 
 它不是一个悬浮在设备外面的 Dashboard：网络数据面、Web 管理面和触屏设备面都在同一台 MU5252 上运行，并尽量沿用原厂服务边界。
 
@@ -73,7 +90,7 @@
 
 | 项目 | 已验证环境 |
 | --- | --- |
-| 设备 | ZTE TOPFLOW MU5252 / `MU5252_HW1.0` |
+| 设备 | ZTE TopFlow MU5252 / `MU5252_HW1.0` |
 | 固件 | `BD_ENCNMU5252V1.0.0B20` |
 | 架构 | AArch64 / musl |
 

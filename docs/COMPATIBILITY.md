@@ -1,6 +1,6 @@
 # Compatibility boundary
 
-The project is validated only on ZTE TOPFLOW MU5252 hardware revision `MU5252_HW1.0` with firmware `BD_ENCNMU5252V1.0.0B20`.
+The project is validated only on ZTE TopFlow MU5252 hardware revision `MU5252_HW1.0` with firmware `BD_ENCNMU5252V1.0.0B20`.
 
 The following details are firmware-specific:
 
