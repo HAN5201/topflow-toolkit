@@ -32,7 +32,7 @@ static void update_network_history(const struct network_status *status)
                    strcmp(history->last_band, modem->band)) {
             short_band_name(history->last_band, old_band, sizeof(old_band));
             short_band_name(modem->band, new_band, sizeof(new_band));
-            snprintf(text, sizeof(text), "%s %s → %s %s",
+            snprintf(text, sizeof(text), "%.15s %.15s → %.15s %.15s",
                      history->last_type[0] ? history->last_type : "--", old_band,
                      modem->type[0] ? modem->type : "--", new_band);
             add_network_event(history, status->updated, text);
