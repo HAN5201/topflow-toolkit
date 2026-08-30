@@ -36,16 +36,28 @@ done
     exit 1
 }
 
-mount_source="$("$ADB_BIN" shell "awk -v target='$TARGET' '\$2 == target { print \$1; exit }' /proc/mounts" | tr -d '\r')"
-case "$mount_source" in
-    '')
+if "$ADB_BIN" shell "awk -v target='$TARGET' '\$2 == target { found=1 } END { exit !found }' /proc/mounts"; then
+    wrapper_inode="$("$ADB_BIN" shell "stat -c '%d:%i' '$BASE/sdx75-set-mwan3-wrapper.sh' 2>/dev/null" | tr -d '\r' || true)"
+    target_inode="$("$ADB_BIN" shell "stat -c '%d:%i' '$TARGET' 2>/dev/null" | tr -d '\r' || true)"
+    if [ -n "$wrapper_inode" ] && [ "$wrapper_inode" = "$target_inode" ] \
+        && "$ADB_BIN" shell "test -x '$BASE/sdx75_set_mwan3.stock.sh'"; then
+        mount_state=ours
+    else
+        mount_state=other
+    fi
+else
+    mount_state=stock
+fi
+
+case "$mount_state" in
+    stock)
         "$ADB_BIN" exec-out cat "$TARGET" >"$TEMP_DIR/stock.sh"
         ;;
-    "$BASE/sdx75-set-mwan3-wrapper.sh")
+    ours)
         "$ADB_BIN" exec-out cat "$BASE/sdx75_set_mwan3.stock.sh" >"$TEMP_DIR/stock.sh"
         ;;
-    *)
-        echo "$TARGET 已被其他来源 bind mount，拒绝覆盖：$mount_source" >&2
+    other)
+        echo "$TARGET 已被其他来源 bind mount，拒绝覆盖" >&2
         exit 1
         ;;
 esac
@@ -64,9 +76,24 @@ fi
     command -v uci >/dev/null
     command -v flock >/dev/null
     command -v conntrack >/dev/null
+    command -v stat >/dev/null
     test -f /etc/rc.local
     test -d /etc/hotplug.d/iface
 '
+
+if [ "$mount_state" = ours ]; then
+    while "$ADB_BIN" shell "awk -v target='$TARGET' '\$2 == target { found=1 } END { exit !found }' /proc/mounts"; do
+        wrapper_inode="$("$ADB_BIN" shell "stat -c '%d:%i' '$BASE/sdx75-set-mwan3-wrapper.sh' 2>/dev/null" | tr -d '\r' || true)"
+        target_inode="$("$ADB_BIN" shell "stat -c '%d:%i' '$TARGET' 2>/dev/null" | tr -d '\r' || true)"
+        [ -n "$wrapper_inode" ] && [ "$wrapper_inode" = "$target_inode" ] || break
+        "$ADB_BIN" shell "umount '$TARGET'"
+    done
+fi
+
+if "$ADB_BIN" shell "awk -v target='$TARGET' '\$2 == target { found=1 } END { exit !found }' /proc/mounts"; then
+    echo "$TARGET 清理本组件挂载后仍存在其他 bind mount，拒绝覆盖" >&2
+    exit 1
+fi
 
 "$ADB_BIN" shell "mkdir -p '$BASE/.install'; chmod 0700 '$BASE/.install'"
 "$ADB_BIN" push "$TEMP_DIR/stock.sh" "$BASE/.install/sdx75_set_mwan3.stock.sh" >/dev/null
@@ -105,12 +132,9 @@ done
     sync
 "
 
-"$ADB_BIN" shell "
-    test -x '$BASE/sdx75_set_mwan3.stock.sh'
-    test -L /etc/hotplug.d/iface/90-mwan3-selective-conntrack
-    awk -v target='$TARGET' -v source='$BASE/sdx75-set-mwan3-wrapper.sh' \
-        '\$2 == target && \$1 == source { found=1 } END { exit !found }' \
-        /proc/mounts
-"
+"$ADB_BIN" shell "test -x '$BASE/sdx75_set_mwan3.stock.sh'; test -L /etc/hotplug.d/iface/90-mwan3-selective-conntrack; awk -v target='$TARGET' '\$2 == target { found=1 } END { exit !found }' /proc/mounts"
+wrapper_inode="$("$ADB_BIN" shell "stat -c '%d:%i' '$BASE/sdx75-set-mwan3-wrapper.sh'" | tr -d '\r')"
+target_inode="$("$ADB_BIN" shell "stat -c '%d:%i' '$TARGET'" | tr -d '\r')"
+[ "$wrapper_inode" = "$target_inode" ]
 
 echo "mwan3 tuning 已安装；MULTIWAN 下 mwan3 已按新策略重新加载"

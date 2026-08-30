@@ -6,34 +6,50 @@ STOP=88
 
 BASE=/data/local/webui-full-menu
 
-top_source() {
-    awk -v target="$1" '$2 == target { source=$1 } END { print source }' /proc/mounts
+mount_present() {
+    awk -v target="$1" '$2 == target { found=1 } END { exit !found }' /proc/mounts
+}
+
+same_inode() {
+    [ -e "$1" ] && [ -e "$2" ] || return 1
+    source_inode="$(stat -c '%d:%i' "$1" 2>/dev/null)" || return 1
+    target_inode="$(stat -c '%d:%i' "$2" 2>/dev/null)" || return 1
+    [ "$source_inode" = "$target_inode" ]
+}
+
+mount_owned() {
+    mount_present "$2" && same_inode "$1" "$2"
 }
 
 mount_file() {
     source="$1"
     target="$2"
     [ -f "$source" ] && [ -f "$target" ] || return 1
-    [ "$(top_source "$target")" = "$source" ] || mount --bind "$source" "$target"
+    if mount_present "$target"; then
+        mount_owned "$source" "$target"
+    else
+        mount --bind "$source" "$target"
+    fi
 }
 
 unmount_ours() {
-    target="$1"
-    expected="$2"
-    [ "$(top_source "$target")" = "$expected" ] \
-        && umount "$target" 2>/dev/null || true
+    source="$1"
+    target="$2"
+    while mount_owned "$source" "$target"; do
+        umount "$target" 2>/dev/null || return 1
+    done
 }
 
 start() {
-    mount_file "$BASE/index.html" /usr/zte_web/web/index.html
-    mount_file "$BASE/menu.js" /usr/zte_web/web/js/config/ufi/U60Pro/menu.js
-    mount_file "$BASE/router.js" /usr/zte_web/web/js/router.js
+    mount_file "$BASE/index.html" /usr/zte_web/web/index.html || return 1
+    mount_file "$BASE/menu.js" /usr/zte_web/web/js/config/ufi/U60Pro/menu.js || return 1
+    mount_file "$BASE/router.js" /usr/zte_web/web/js/router.js || return 1
     mount_file "$BASE/network_lock.html" /usr/zte_web/web/tmpl/auth/network_lock.html
 }
 
 stop() {
-    unmount_ours /usr/zte_web/web/tmpl/auth/network_lock.html "$BASE/network_lock.html"
-    unmount_ours /usr/zte_web/web/js/router.js "$BASE/router.js"
-    unmount_ours /usr/zte_web/web/js/config/ufi/U60Pro/menu.js "$BASE/menu.js"
-    unmount_ours /usr/zte_web/web/index.html "$BASE/index.html"
+    unmount_ours "$BASE/network_lock.html" /usr/zte_web/web/tmpl/auth/network_lock.html
+    unmount_ours "$BASE/router.js" /usr/zte_web/web/js/router.js
+    unmount_ours "$BASE/menu.js" /usr/zte_web/web/js/config/ufi/U60Pro/menu.js
+    unmount_ours "$BASE/index.html" /usr/zte_web/web/index.html
 }

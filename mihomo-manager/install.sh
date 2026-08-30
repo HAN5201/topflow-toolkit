@@ -26,6 +26,12 @@ device_push() {
     exit 1
 }
 
+device_shell 'command -v stat >/dev/null'
+if ! device_shell '[ ! -d /data/local/webui-full-menu ] && [ ! -x /etc/init.d/web-full-menu ]'; then
+    echo "remove the full WebUI menu before installing or updating Mihomo Manager" >&2
+    exit 1
+fi
+
 for file in \
     "$MIHOMO_NETNS/mihomo-netns.sh" \
     "$MIHOMO_NETNS/mihomo-netns-autostart.sh" \
@@ -39,7 +45,43 @@ else
     SERVICE_WAS_ENABLED=0
 fi
 
-device_shell '[ ! -x /etc/init.d/mihomo-manager-web ] || /etc/init.d/mihomo-manager-web stop' >/dev/null
+device_shell '
+    set -eu
+    mount_present() {
+        awk -v target="$1" '\''$2 == target { found=1 } END { exit !found }'\'' /proc/mounts
+    }
+    same_inode() {
+        [ -e "$1" ] && [ -e "$2" ] || return 1
+        source_inode=$(stat -c "%d:%i" "$1" 2>/dev/null) || return 1
+        target_inode=$(stat -c "%d:%i" "$2" 2>/dev/null) || return 1
+        [ "$source_inode" = "$target_inode" ]
+    }
+    unmount_owned() {
+        while mount_present "$2" && same_inode "$1" "$2"; do
+            umount "$2"
+        done
+    }
+
+    unmount_owned /data/mihomo-manager/web-root/menu.js /usr/zte_web/web/js/config/ufi/U60Pro/menu.js
+    unmount_owned /data/mihomo-manager/web-root/index.html /usr/zte_web/web/index.html
+    unmount_owned /data/mihomo-manager/web/tmpl-auth-adm /usr/zte_web/web/tmpl/auth/adm
+    unmount_owned /data/mihomo-manager/web/js-auth-adm /usr/zte_web/web/js/auth/adm
+    unmount_owned /data/mihomo-manager/acl.d /usr/share/rpcd/acl.d
+    unmount_owned /data/mihomo-manager/rpcd /usr/libexec/rpcd
+
+    for target in \
+        /usr/zte_web/web/js/config/ufi/U60Pro/menu.js \
+        /usr/zte_web/web/index.html \
+        /usr/zte_web/web/tmpl/auth/adm \
+        /usr/zte_web/web/js/auth/adm \
+        /usr/share/rpcd/acl.d \
+        /usr/libexec/rpcd; do
+        if mount_present "$target"; then
+            echo "$target already has an unrelated bind mount" >&2
+            exit 1
+        fi
+    done
+' >/dev/null
 "$ADB_BIN" pull /usr/zte_web/web/index.html "$TEMP_DIR/index.html" >/dev/null
 "$ADB_BIN" pull /usr/zte_web/web/js/config/ufi/U60Pro/menu.js "$TEMP_DIR/menu.js" >/dev/null
 node "$HERE/patch-webui.mjs" \

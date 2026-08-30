@@ -35,6 +35,10 @@ wrapper：先执行设备自己的原厂副本，再应用本项目规则。
 如果设备已存在其他 /sbin/sdx75_set_mwan3.sh bind mount，安装器会拒绝覆盖。当前为
 MULTIWAN 时，安装会重启 mwan3 并短暂影响新连接；不会切换普通/聚合模式。
 
+挂载所有权通过 source/target 的 device:inode 判断；`/proc/mounts` 在本机只显示
+userdata 块设备，不能用其 source 字段反推 `/data` 中的原始文件。重复 start 不会叠加
+挂载，卸载会清理本组件意外留下的连续顶层挂载。
+
 选择性清理映射可以只读检查：
 
     adb shell 'INTERFACE=zte_mwan4 /etc/hotplug.d/iface/90-mwan3-selective-conntrack --inspect'

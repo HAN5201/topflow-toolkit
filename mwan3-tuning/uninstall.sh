@@ -19,29 +19,48 @@ fi
     echo "设备端 ADB 不是 root" >&2
     exit 1
 }
+"$ADB_BIN" shell 'command -v stat >/dev/null'
 
 if [ "$MODE" = --check ]; then
     "$ADB_BIN" shell "
         test -d '$BASE'
         test -x '$BASE/sdx75_set_mwan3.stock.sh'
+        if awk -v target='$TARGET' '\$2 == target { found=1 } END { exit !found }' /proc/mounts; then
+            test \"\$(stat -c '%d:%i' '$BASE/sdx75-set-mwan3-wrapper.sh')\" = \
+                \"\$(stat -c '%d:%i' '$TARGET')\"
+        fi
         echo '可以卸载；若当前为 MULTIWAN，mwan3 会短暂重启'
     "
     exit
 fi
 
 "$ADB_BIN" push "$HERE/remove-boot-hook.sh" /tmp/remove-mwan3-tuning-boot-hook.sh >/dev/null
+if "$ADB_BIN" shell "awk -v target='$TARGET' '\$2 == target { found=1 } END { exit !found }' /proc/mounts"; then
+    wrapper_inode="$("$ADB_BIN" shell "stat -c '%d:%i' '$BASE/sdx75-set-mwan3-wrapper.sh' 2>/dev/null" | tr -d '\r' || true)"
+    target_inode="$("$ADB_BIN" shell "stat -c '%d:%i' '$TARGET' 2>/dev/null" | tr -d '\r' || true)"
+    if [ -z "$wrapper_inode" ] || [ "$wrapper_inode" != "$target_inode" ]; then
+        echo "$TARGET 顶层是其他 bind mount，拒绝卸载以免遗留被遮盖的本组件挂载" >&2
+        "$ADB_BIN" shell 'rm -f /tmp/remove-mwan3-tuning-boot-hook.sh'
+        exit 1
+    fi
+fi
+
 "$ADB_BIN" shell "
     set -eu
     chmod 0755 /tmp/remove-mwan3-tuning-boot-hook.sh
     /tmp/remove-mwan3-tuning-boot-hook.sh
     rm -f /tmp/remove-mwan3-tuning-boot-hook.sh
+"
 
-    source=\$(awk -v target='$TARGET' '\$2 == target { print \$1; exit }' /proc/mounts)
-    if [ -n \"\$source\" ]; then
-        [ \"\$source\" = '$BASE/sdx75-set-mwan3-wrapper.sh' ]
-        umount '$TARGET'
-    fi
+while "$ADB_BIN" shell "awk -v target='$TARGET' '\$2 == target { found=1 } END { exit !found }' /proc/mounts"; do
+    wrapper_inode="$("$ADB_BIN" shell "stat -c '%d:%i' '$BASE/sdx75-set-mwan3-wrapper.sh' 2>/dev/null" | tr -d '\r' || true)"
+    target_inode="$("$ADB_BIN" shell "stat -c '%d:%i' '$TARGET' 2>/dev/null" | tr -d '\r' || true)"
+    [ -n "$wrapper_inode" ] && [ "$wrapper_inode" = "$target_inode" ] || break
+    "$ADB_BIN" shell "umount '$TARGET'"
+done
 
+"$ADB_BIN" shell "
+    set -eu
     if [ -L '$HOTPLUG_TARGET' ] \
         && [ \"\$(readlink '$HOTPLUG_TARGET')\" = '$BASE/90-mwan3-selective-conntrack' ]; then
         rm -f '$HOTPLUG_TARGET'
@@ -68,7 +87,6 @@ fi
     sync
 
     ! grep -q 'TopFlow mwan3 tuning' /etc/rc.local
-    ! awk -v target='$TARGET' '\$2 == target { found=1 } END { exit !found }' /proc/mounts
 "
 
 echo "mwan3 tuning 已卸载并恢复厂商生成路径"

@@ -1,5 +1,12 @@
 # Compatibility boundary
 
+## 版本提示
+
+不要部署 `v0.1.0` 中的 `web-full-menu` 或 `mwan3-tuning`：该版本错误地把
+`/proc/mounts` 的 source 字段当作单文件 bind mount 的原始路径，在 B20 上会造成重复
+挂载，并可能让停止或卸载遗漏自身挂载。请使用 `v0.1.1` 或更新版本；新版通过
+source/target 的 device:inode 判断所有权，并在升级、停止和卸载时清理连续的自身挂载。
+
 本项目只在商品名 ZTE TopFlow、硬件 `MU5252_HW1.0`、固件
 `BD_ENCNMU5252V1.0.0B20` 上验证。MU5252 是内部硬件标识，不是项目名，也不代表其他
 同名外观或其他地区固件自动兼容。

@@ -13,7 +13,18 @@ INDEX_SOURCE="$BASE/web-root/index.html"
 MENU_SOURCE="$BASE/web-root/menu.js"
 
 is_mounted() {
-    grep -q " $1 " /proc/mounts 2>/dev/null
+    awk -v target="$1" '$2 == target { found=1 } END { exit !found }' /proc/mounts
+}
+
+same_inode() {
+    [ -e "$1" ] && [ -e "$2" ] || return 1
+    source_inode="$(stat -c '%d:%i' "$1" 2>/dev/null)" || return 1
+    target_inode="$(stat -c '%d:%i' "$2" 2>/dev/null)" || return 1
+    [ "$source_inode" = "$target_inode" ]
+}
+
+mount_owned() {
+    is_mounted "$2" && same_inode "$1" "$2"
 }
 
 sync_stock() {
@@ -36,7 +47,10 @@ sync_stock() {
 mount_one() {
     source="$1"
     target="$2"
-    if [ -d "$source" ] && [ -d "$target" ] && ! is_mounted "$target"; then
+    [ -d "$source" ] && [ -d "$target" ] || return 1
+    if is_mounted "$target"; then
+        mount_owned "$source" "$target"
+    else
         mount --bind "$source" "$target"
     fi
 }
@@ -44,29 +58,37 @@ mount_one() {
 mount_file() {
     source="$1"
     target="$2"
-    if [ -f "$source" ] && [ -f "$target" ] && ! is_mounted "$target"; then
+    [ -f "$source" ] && [ -f "$target" ] || return 1
+    if is_mounted "$target"; then
+        mount_owned "$source" "$target"
+    else
         mount --bind "$source" "$target"
     fi
 }
 
+unmount_ours() {
+    source="$1"
+    target="$2"
+    while mount_owned "$source" "$target"; do
+        umount "$target" 2>/dev/null || return 1
+    done
+}
+
 start() {
     sync_stock
-    mount_one "$RPCD_SOURCE" /usr/libexec/rpcd
-    mount_one "$ACL_SOURCE" /usr/share/rpcd/acl.d
-    mount_one "$JS_SOURCE" /usr/zte_web/web/js/auth/adm
-    mount_one "$TMPL_SOURCE" /usr/zte_web/web/tmpl/auth/adm
-    mount_file "$INDEX_SOURCE" /usr/zte_web/web/index.html
+    mount_one "$RPCD_SOURCE" /usr/libexec/rpcd || return 1
+    mount_one "$ACL_SOURCE" /usr/share/rpcd/acl.d || return 1
+    mount_one "$JS_SOURCE" /usr/zte_web/web/js/auth/adm || return 1
+    mount_one "$TMPL_SOURCE" /usr/zte_web/web/tmpl/auth/adm || return 1
+    mount_file "$INDEX_SOURCE" /usr/zte_web/web/index.html || return 1
     mount_file "$MENU_SOURCE" /usr/zte_web/web/js/config/ufi/U60Pro/menu.js
 }
 
 stop() {
-    for target in \
-        /usr/zte_web/web/js/config/ufi/U60Pro/menu.js \
-        /usr/zte_web/web/index.html \
-        /usr/zte_web/web/tmpl/auth/adm \
-        /usr/zte_web/web/js/auth/adm \
-        /usr/share/rpcd/acl.d \
-        /usr/libexec/rpcd; do
-        is_mounted "$target" && umount "$target" 2>/dev/null || true
-    done
+    unmount_ours "$MENU_SOURCE" /usr/zte_web/web/js/config/ufi/U60Pro/menu.js
+    unmount_ours "$INDEX_SOURCE" /usr/zte_web/web/index.html
+    unmount_ours "$TMPL_SOURCE" /usr/zte_web/web/tmpl/auth/adm
+    unmount_ours "$JS_SOURCE" /usr/zte_web/web/js/auth/adm
+    unmount_ours "$ACL_SOURCE" /usr/share/rpcd/acl.d
+    unmount_ours "$RPCD_SOURCE" /usr/libexec/rpcd
 }

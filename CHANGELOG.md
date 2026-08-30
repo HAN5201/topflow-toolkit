@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.1 — 2026-08-30
+
+- 不再把 `/proc/mounts` 的 source 字段当作单文件 bind mount 的原始文件路径；
+- 通过挂载目标存在性与 source/target 的 device:inode 判断挂载所有权；
+- start 保持幂等，stop/uninstall 会清理本组件意外叠加的全部顶层挂载，但不触碰无关挂载；
+- Mihomo Manager 同步采用所有权检查，并拒绝在完整菜单仍叠加时安装或卸载；
+- 增加 B20 实机临时双层 bind mount 回归脚本。
+
 ## v0.1.0 — 2026-08-30
 
 TopFlow Toolkit 首个正式版本。
