@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/readme-hero-v2.svg" alt="ZTE TopFlow Toolkit：三路蜂窝、Mihomo、原生 WebUI 与 LVGL 触屏控制" width="100%">
+  <img src="docs/assets/readme-hero-v2.svg" alt="ZTE TopFlow Toolkit：三路蜂窝、Mihomo、原生 WebUI、LVGL 触屏与可恢复设备改造" width="100%">
 </p>
 
 <p align="center">
@@ -8,7 +8,8 @@
 
 <p align="center">
   <a href="https://github.com/imshuhao/topflow-toolkit/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/imshuhao/topflow-toolkit/ci.yml?branch=main&amp;style=flat-square&amp;label=CI&amp;labelColor=0b0f0d&amp;color=238636" alt="CI"></a>
-  <img src="https://img.shields.io/badge/target-MU5252%20B20-238636?style=flat-square&amp;labelColor=0b0f0d" alt="Target: MU5252 B20">
+  <a href="https://github.com/imshuhao/topflow-toolkit/releases"><img src="https://img.shields.io/github/v/release/imshuhao/topflow-toolkit?style=flat-square&amp;labelColor=0b0f0d&amp;color=238636" alt="Latest release"></a>
+  <img src="https://img.shields.io/badge/target-TopFlow%20B20-238636?style=flat-square&amp;labelColor=0b0f0d" alt="Target: ZTE TopFlow B20">
   <img src="https://img.shields.io/badge/arch-AArch64-238636?style=flat-square&amp;labelColor=0b0f0d" alt="Architecture: AArch64">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-238636?style=flat-square&amp;labelColor=0b0f0d" alt="MIT License"></a>
 </p>
@@ -18,6 +19,8 @@
   <a href="#实机界面">实机界面</a> ·
   <a href="#开始使用">开始使用</a> ·
   <a href="docs/COMPATIBILITY.md">兼容性</a> ·
+  <a href="docs/NETWORK-ARCHITECTURE.md">网络架构</a> ·
+  <a href="docs/RECOVERY.md">恢复</a> ·
   <a href="docs/SCREENSHOTS.md">完整截图</a>
 </p>
 
@@ -25,28 +28,36 @@
 
 <table>
   <tr>
-    <td width="50%" valign="top">
+    <td width="33%" valign="top">
       <strong>蜂窝网络可观测</strong><br><br>
       同时查看 X75、V3E2、V3E1 三路基带的信号、注册、QCI、AMBR、地址、实时流量与趋势。
     </td>
-    <td width="50%" valign="top">
+    <td width="33%" valign="top">
       <strong>独立透明网关</strong><br><br>
       Mihomo 运行在独立 network namespace 中；宿主保留原厂路由，DHCP 客户端按需接入 IPv4 透明代理。
     </td>
+    <td width="33%" valign="top">
+      <strong>双模式链路治理</strong><br><br>
+      普通模式优化 mwan3 质量与粘性；聚合模式沿用厂商 ICG，并处理与 Mihomo 串联的边界。
+    </td>
   </tr>
   <tr>
-    <td width="50%" valign="top">
+    <td width="33%" valign="top">
       <strong>双端原生控制</strong><br><br>
       Mihomo 管理能力接入厂商 WebUI；同一套状态与控制延伸到设备原生 LVGL 触摸屏。
     </td>
-    <td width="50%" valign="top">
+    <td width="33%" valign="top">
       <strong>设备级运维</strong><br><br>
       覆盖核心与配置更新、散热曲线、Wi-Fi 功率、运行诊断、屏幕抓取、启动恢复与完整卸载。
+    </td>
+    <td width="33%" valign="top">
+      <strong>固件资源再利用</strong><br><br>
+      从设备当前 WebUI 生成完整菜单补丁；不打包或分发厂商页面、二进制、字体和图片。
     </td>
   </tr>
 </table>
 
-它不是一个悬浮在设备外面的 Dashboard：网络数据面、Web 管理面和触屏设备面都在同一台 MU5252 上运行，并尽量沿用原厂服务边界。
+它不是一个悬浮在设备外面的 Dashboard：网络数据面、Web 管理面和触屏设备面都在同一台 TopFlow 上运行，并尽量沿用原厂服务边界。
 
 ## 实机界面
 
@@ -67,15 +78,19 @@
 
 <p align="center"><a href="docs/SCREENSHOTS.md"><strong>查看 18 张脱敏实机截图 →</strong></a></p>
 
-## 三层结构
+## 组件地图
 
-| 层 | 组件 | 职责 |
+| 组件 | 职责 | 状态边界 |
 | --- | --- | --- |
-| 网络数据面 | [`mihomo-netns`](mihomo-netns/) | 在隔离 namespace 中运行 Mihomo，提供 IPv4 透明网关、DHCP 网关/DNS 下发和故障恢复 |
-| Web 管理面 | [`mihomo-manager`](mihomo-manager/) | 将状态、模式、配置、核心更新和网络开关接入设备原生 WebUI |
-| 触屏设备面 | [`touchscreen-control-center`](touchscreen-control-center/) | 通过 `LD_PRELOAD` 扩展原厂 LVGL 界面，集中管理三基带、Mihomo、系统、散热和 Wi-Fi |
+| [`mihomo-netns`](mihomo-netns/) | 隔离运行 Mihomo，提供 IPv4 透明网关、DHCP 网关/DNS 下发和故障恢复 | 实机运行 |
+| [`mihomo-manager`](mihomo-manager/) | 将状态、模式、配置、核心更新和网络开关接入设备原生 WebUI | 实机运行 |
+| [`touchscreen-control-center`](touchscreen-control-center/) | 通过 `LD_PRELOAD` 扩展原厂 LVGL，管理三基带、Mihomo、系统、散热和 Wi-Fi | 实机运行 |
+| [`timekeeper`](timekeeper/) | 用 Qualcomm `time_genoff` 在联网前恢复可信时间，避免 1970 年阻断 TLS | 实机验证 |
+| [`mwan3-tuning`](mwan3-tuning/) | 修复普通模式规则顺序、质量探测和全局 conntrack 清理 | 底层规则实机验证；公开包装器待干净机复测 |
+| [`web-full-menu`](web-full-menu/) | 从目标设备当前文件生成完整隐藏菜单，保持登录与后端权限边界 | 同设计实机运行；公开补丁器合成测试 |
+| [`zwrt-datad-tools`](zwrt-datad-tools/) | 检查、更新、健康验证并回滚触屏所依赖的上游数据服务 | v0.9.21 实机验证 |
 
-这三个组件可以分别阅读和部署。触屏网络页面依赖本机 `zwrt-datad /state`，Mihomo 页面依赖 `mihomo-manager`。
+各组件可以分别阅读和部署。触屏网络页面依赖本机 `zwrt-datad /state`，Mihomo 触屏页面依赖 `mihomo-manager`；完整菜单应安装在 Manager 之后。
 
 ## 设计边界
 
@@ -83,6 +98,7 @@
 - **可恢复：** 安装脚本保存必要状态，服务停止撤销当前 DHCP 下发，卸载器移除本组件的挂载、服务和规则。
 - **固件锁定：** 触屏安装前核对原厂 `zte_topsw_devui` 的 SHA-256；不匹配就停止。
 - **不搬运厂商资源：** WebUI 在本地补丁当前文件；仓库不分发 ZTE 二进制、固件、字体或可复用图片资源。
+- **不伪造通用性：** 实测、公开包装器测试和仍待验证的部分分别标注，不把“配置存在”写成“业务在线”。
 
 ## 开始使用
 
@@ -90,20 +106,29 @@
 
 | 项目 | 已验证环境 |
 | --- | --- |
-| 设备 | ZTE TopFlow MU5252 / `MU5252_HW1.0` |
+| 商品名 | ZTE TopFlow |
+| 硬件标识 | MU5252 / `MU5252_HW1.0` |
 | 固件 | `BD_ENCNMU5252V1.0.0B20` |
 | 架构 | AArch64 / musl |
 
-建议按顺序阅读并部署：
+核心界面的建议部署顺序：
 
-1. [部署 Mihomo 透明网关](mihomo-netns/README.md)
-2. [安装设备 Web 管理页](mihomo-manager/README.md)
-3. [编译和安装触屏控制中心](touchscreen-control-center/README.md)
+1. 准备 [Root ADB](docs/ROOT-ADB.md)，并核对 [兼容性边界](docs/COMPATIBILITY.md)；
+2. 安装上游 [`zwrt-datad` v0.9.21+](https://github.com/33333s/zwrt-datad)，或用[维护工具](zwrt-datad-tools/)检查已有版本；
+3. [部署 Mihomo 透明网关](mihomo-netns/README.md)；
+4. [安装设备 Web 管理页](mihomo-manager/README.md)；
+5. 按需安装[完整 WebUI 菜单](web-full-menu/README.md)；
+6. [编译和安装触屏控制中心](touchscreen-control-center/README.md)。
+
+[`timekeeper`](timekeeper/) 与 [`mwan3-tuning`](mwan3-tuning/) 是独立增强项。前者解决开机
+时间可信度，后者只影响普通 `MULTIWAN`；先理解[网络架构](docs/NETWORK-ARCHITECTURE.md)
+再部署。卸载前阅读[统一恢复顺序](docs/RECOVERY.md)。
 
 > [!WARNING]
 > 脚本会以 root 权限修改 network namespace、DHCP、init 服务、`rc.local` 和只读 WebUI 的 bind mount。它们不是通用 OpenWrt 软件包，也没有在其他硬件或固件上验证。开始前请准备 root ADB、当前配置备份，以及不依赖被改 DHCP 路径的恢复入口。
 
-更精确的前置条件与固件边界见 [Compatibility boundary](docs/COMPATIBILITY.md)。
+更精确的前置条件与固件边界见 [Compatibility boundary](docs/COMPATIBILITY.md)。ICG 的
+机制、自建服务端边界与判断在线的方法见 [聚合技术说明](docs/AGGREGATION.md)。
 
 ## 本地验证
 
@@ -111,9 +136,14 @@
 make check
 ```
 
-该命令检查 Shell/Node 语法、单元测试和触屏注入库的严格宿主编译。面向设备的正式产物仍应使用 AArch64 musl 交叉编译器构建。
+该命令检查 POSIX Shell/Bash/Node 语法、ShellCheck、WebUI 补丁器单元测试、Timekeeper
+helper 严格宿主编译，以及触屏注入库的严格宿主编译。面向设备的正式产物仍应使用
+AArch64 musl 环境构建。
 
-namespace、管理后端和触屏主体来自已经在 B20 实机运行的版本；公开安装器也经过语法、单元测试、严格编译、AArch64 musl 构建和当前设备 Web 文件的只读补丁测试。尚未在另一台干净设备上重跑完整的安装—重启—卸载流程，因此首次部署仍应按实验性改机处理。
+namespace、管理后端、触屏主体和 Timekeeper 来自已经在 B20 实机运行的版本；公开
+安装器也经过语法、单元测试、严格编译、AArch64 musl 构建和当前设备 Web 文件的只读
+补丁测试。尚未在另一台干净设备上重跑所有组件的安装—重启—卸载流程，因此首次部署
+仍应按实验性改机处理。
 
 <details>
 <summary><strong>仓库不包含什么</strong></summary>

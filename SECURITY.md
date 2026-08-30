@@ -15,3 +15,5 @@ Please use GitHub's private vulnerability reporting feature for vulnerabilities 
 - Review all fixed addresses, interfaces and firmware hashes before installation.
 - Keep a tested rollback path. A misconfigured DHCP gateway can disconnect every LAN client.
 - Treat WebUI configuration and logs as sensitive even though the page requires an authenticated device session.
+- The full-menu patch exposes authenticated firmware pages that the stock sidebar hides, including diagnostic and remote-management settings. Visibility is not proof that a backend feature is safe or supported on this firmware.
+- Never attach a raw configuration backup to a public report. It can contain administrator credentials, device identity, `/etc/shadow`, carrier data and persistent startup changes.

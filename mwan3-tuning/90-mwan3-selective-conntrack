@@ -1,0 +1,95 @@
+#!/bin/sh
+
+# Delete only IPv4 conntrack entries owned by a failed mwan3 interface.
+# Recovery events intentionally leave healthy, established connections alone.
+
+STATE_DIR=/tmp/run/mwan3-selective-conntrack
+STATE_FILE=$STATE_DIR/state
+LOCK_FILE=$STATE_DIR/lock
+INSPECT=0
+
+if [ "${1:-}" = "--inspect" ]; then
+	INSPECT=1
+else
+	case "${ACTION:-}" in
+		ifdown|disconnected) ;;
+		*) exit 0 ;;
+	esac
+fi
+
+case "${INTERFACE:-}" in
+	zte_wan|zte_mwan2|zte_mwan3|zte_mwan4) ;;
+	*) exit 0 ;;
+esac
+
+interface_id=0
+for candidate in $(uci -q show mwan3 \
+	| sed -n 's/^mwan3\.\([^.=]*\)=interface$/\1/p'); do
+	interface_id=$((interface_id + 1))
+	[ "$candidate" = "$INTERFACE" ] && break
+done
+[ "$candidate" = "$INTERFACE" ] || exit 0
+
+mask_hex=$(uci -q get mwan3.globals.mmx_mask)
+[ -n "$mask_hex" ] || mask_hex=0x3F00
+mask_decimal=$((mask_hex))
+
+# Map the interface ordinal onto the bit positions enabled by mmx_mask.  This
+# mirrors mwan3_id2mask without sourcing mwan3.sh and mutating runtime state.
+bit_mask=0
+bit_value=0
+mark_decimal=0
+while [ "$bit_mask" -lt 32 ]; do
+	if [ $(((mask_decimal >> bit_mask) & 1)) -eq 1 ]; then
+		if [ $(((interface_id >> bit_value) & 1)) -eq 1 ]; then
+			mark_decimal=$((mark_decimal | (1 << bit_mask)))
+		fi
+		bit_value=$((bit_value + 1))
+	fi
+	bit_mask=$((bit_mask + 1))
+done
+mark_hex=$(printf '0x%x' "$mark_decimal")
+
+if [ "$INSPECT" = "1" ]; then
+	matching=$(conntrack -L -f ipv4 --mark "$mark_decimal/$mask_decimal" 2>/dev/null \
+		| awk 'END { print NR + 0 }')
+	printf 'interface=%s id=%s mark=%s mask=%s matching=%s\n' \
+		"$INTERFACE" "$interface_id" "$mark_hex" "$mask_hex" "$matching"
+	exit 0
+fi
+
+mkdir -p "$STATE_DIR"
+exec 9>"$LOCK_FILE"
+flock 9
+
+# Count after acquiring the lock so concurrent down events cannot record a
+# stale pre-delete count for the same interface.
+matching=$(conntrack -L -f ipv4 --mark "$mark_decimal/$mask_decimal" 2>/dev/null \
+	| awk 'END { print NR + 0 }')
+events=$(sed -n 's/^events=//p' "$STATE_FILE" 2>/dev/null)
+case "$events" in
+	''|*[!0-9]*) events=0 ;;
+esac
+events=$((events + 1))
+
+if [ "$matching" -gt 0 ]; then
+	conntrack -D -f ipv4 --mark "$mark_decimal/$mask_decimal" >/dev/null 2>&1
+	result=$?
+else
+	result=0
+fi
+
+STATE_TMP=$STATE_FILE.new.$$
+{
+	printf 'events=%s\n' "$events"
+	printf 'last_epoch=%s\n' "$(date +%s)"
+	printf 'last_interface=%s\n' "$INTERFACE"
+	printf 'last_action=%s\n' "$ACTION"
+	printf 'last_mark=%s\n' "$mark_hex"
+	printf 'last_mask=%s\n' "$mask_hex"
+	printf 'last_matching=%s\n' "$matching"
+	printf 'last_result=%s\n' "$result"
+} > "$STATE_TMP"
+mv "$STATE_TMP" "$STATE_FILE"
+
+exit 0

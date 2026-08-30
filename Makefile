@@ -1,33 +1,51 @@
 SHELL := /bin/sh
 CC ?= cc
 TOUCH_DIR := touchscreen-control-center
+TIMEKEEPER_DIR := timekeeper
 BUILD_DIR := build
+POSIX_DIRS := mihomo-manager mihomo-netns touchscreen-control-center \
+	timekeeper mwan3-tuning web-full-menu tests
+SHELLCHECK_DIRS := $(POSIX_DIRS) zwrt-datad-tools
 UNAME_S := $(shell uname -s)
 TOUCH_LIBS := -pthread
 TOUCH_LDFLAGS :=
+TIMEKEEPER_LIBS :=
 ifeq ($(UNAME_S),Linux)
 TOUCH_LIBS += -ldl
 TOUCH_LDFLAGS += -Wl,-soname,touchui-hook.so
+TIMEKEEPER_LIBS += -ldl
 endif
 
-.PHONY: check shell-check shellcheck node-check touchui-check clean
+.PHONY: check shell-check shellcheck node-check boot-hook-check timekeeper-check touchui-check clean
 
-check: shell-check shellcheck node-check touchui-check
+check: shell-check shellcheck node-check boot-hook-check timekeeper-check touchui-check
 
 shell-check:
-	@find mihomo-manager mihomo-netns touchscreen-control-center -type f \
+	@find $(POSIX_DIRS) -type f \
 		\( -name '*.sh' -o -name '*.init' -o -name '*.api' \) \
 		-exec sh -n {} \;
+	@bash -n zwrt-datad-tools/update-zwrt-datad.sh
 
 shellcheck:
 	@command -v shellcheck >/dev/null
-	@find mihomo-manager mihomo-netns touchscreen-control-center -type f \
+	@find $(SHELLCHECK_DIRS) -type f \
 		\( -name '*.sh' -o -name '*.init' -o -name '*.api' \) \
 		-print0 | xargs -0 shellcheck -S warning
 
 node-check:
 	@node --check mihomo-manager/patch-webui.mjs
+	@node --check web-full-menu/patch-webui.mjs
 	@node --test mihomo-manager/tests/*.test.mjs
+	@node --test web-full-menu/tests/*.test.mjs
+
+boot-hook-check:
+	@./tests/boot-hooks.sh
+
+timekeeper-check:
+	@mkdir -p $(BUILD_DIR)
+	$(CC) -std=c11 -Os -Wall -Wextra -Werror \
+		-o $(BUILD_DIR)/time-genoff-host $(TIMEKEEPER_DIR)/time-genoff.c \
+		$(TIMEKEEPER_LIBS)
 
 touchui-check:
 	@mkdir -p $(BUILD_DIR)

@@ -1,0 +1,39 @@
+#!/bin/sh /etc/rc.common
+# shellcheck disable=SC2034
+
+START=12
+STOP=88
+
+BASE=/data/local/webui-full-menu
+
+top_source() {
+    awk -v target="$1" '$2 == target { source=$1 } END { print source }' /proc/mounts
+}
+
+mount_file() {
+    source="$1"
+    target="$2"
+    [ -f "$source" ] && [ -f "$target" ] || return 1
+    [ "$(top_source "$target")" = "$source" ] || mount --bind "$source" "$target"
+}
+
+unmount_ours() {
+    target="$1"
+    expected="$2"
+    [ "$(top_source "$target")" = "$expected" ] \
+        && umount "$target" 2>/dev/null || true
+}
+
+start() {
+    mount_file "$BASE/index.html" /usr/zte_web/web/index.html
+    mount_file "$BASE/menu.js" /usr/zte_web/web/js/config/ufi/U60Pro/menu.js
+    mount_file "$BASE/router.js" /usr/zte_web/web/js/router.js
+    mount_file "$BASE/network_lock.html" /usr/zte_web/web/tmpl/auth/network_lock.html
+}
+
+stop() {
+    unmount_ours /usr/zte_web/web/tmpl/auth/network_lock.html "$BASE/network_lock.html"
+    unmount_ours /usr/zte_web/web/js/router.js "$BASE/router.js"
+    unmount_ours /usr/zte_web/web/js/config/ufi/U60Pro/menu.js "$BASE/menu.js"
+    unmount_ours /usr/zte_web/web/index.html "$BASE/index.html"
+}
