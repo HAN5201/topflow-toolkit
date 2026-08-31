@@ -23,7 +23,7 @@ static void refresh_network_ui(void)
         set_stock_signal_icon(&network_signal_icon[i], modem->valid,
                               modem->online, modem->bars, modem->roaming);
         set_label_text_if_changed(network_summary_label[i], status.valid ?
-                                  short_operator_name(modem->operator_name) : "读取中…");
+                                  display_operator_name(modem->operator_name) : "读取中…");
         short_band_name(modem->band, band, sizeof(band));
         snprintf(text, sizeof(text), "%s · %s", modem->type[0] ? modem->type : "离线", band);
         set_label_text_if_changed(network_signal_label[i], status.valid ? text : "-- · --");

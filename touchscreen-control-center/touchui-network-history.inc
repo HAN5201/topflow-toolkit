@@ -42,7 +42,7 @@ static void update_network_history(const struct network_status *status)
             add_network_event(history, status->updated, text);
         } else if (strcmp(history->last_operator, modem->operator_name)) {
             snprintf(text, sizeof(text), "运营商变更为 %s",
-                     short_operator_name(modem->operator_name));
+                     display_operator_name(modem->operator_name));
             add_network_event(history, status->updated, text);
         }
         history->last_online = modem->online;

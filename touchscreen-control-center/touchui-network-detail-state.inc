@@ -35,7 +35,7 @@ static void refresh_network_detail_ui(void)
     lv_label_set_text_p(network_detail_sim_label, text);
     short_band_name(modem->band, band, sizeof(band));
     snprintf(text, sizeof(text), "%s · %s · %s",
-             short_operator_name(modem->operator_name),
+             display_operator_name(modem->operator_name),
              modem->type[0] ? modem->type : "--", band);
     set_label_text_if_changed(network_detail_band_label, text);
 

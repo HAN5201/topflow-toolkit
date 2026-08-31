@@ -5,12 +5,12 @@ static const char *network_module_titles[NETWORK_MODEM_COUNT] = {
 };
 static const char *network_module_ids[NETWORK_MODEM_COUNT] = {"X75", "V3E2", "V3E1"};
 
-static const char *short_operator_name(const char *name)
+static const char *display_operator_name(const char *name)
 {
-    if (contains_text_ci(name, "unicom")) return "联通";
-    if (contains_text_ci(name, "mobile") || contains_text_ci(name, "cmcc")) return "移动";
-    if (contains_text_ci(name, "telecom") || contains_text_ci(name, "chn-ct")) return "电信";
-    if (contains_text_ci(name, "broadnet") || contains_text_ci(name, "cbn")) return "广电";
+    if (contains_text_ci(name, "unicom")) return "中国联通";
+    if (contains_text_ci(name, "mobile") || contains_text_ci(name, "cmcc")) return "中国移动";
+    if (contains_text_ci(name, "telecom") || contains_text_ci(name, "chn-ct")) return "中国电信";
+    if (contains_text_ci(name, "broadnet") || contains_text_ci(name, "cbn")) return "中国广电";
     return name && *name ? name : "未知运营商";
 }
 

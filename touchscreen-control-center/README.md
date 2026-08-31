@@ -16,7 +16,7 @@
 
 状态数据每秒从本机 `zwrt-datad /state` 读取；散热、Wi-Fi 和刷新操作只向 `/control`
 发送固定 action 与受约束参数。Mihomo 操作只调用
-`/data/mihomo-manager/mihomo-manager.sh` 的固定子命令。大陆四家运营商统一显示为短中文名；
+`/data/mihomo-manager/mihomo-manager.sh` 的固定子命令。大陆四家运营商统一显示为完整中文名；
 其余超出可用宽度的运营商、地址和身份字段使用仅溢出时启用的循环滚动标签。
 
 ## 兼容性
