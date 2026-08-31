@@ -19,11 +19,10 @@ static int create_network_identity_page(lv_obj_t *top)
         make_detail_label(network_identity_page, sim_keys[i],
                           18, 82 + i * 21, 58, 17,
                           ui_font_tiny, COLOR_MUTED);
-        network_identity_sim_values[i] = make_detail_label(
+        network_identity_sim_values[i] = make_scrolling_detail_label(
                           network_identity_page, "--",
                           78, 82 + i * 21, 224, 17,
-                          ui_font_tiny, COLOR_TEXT);
-        right_align_label_text(network_identity_sim_values[i]);
+                          ui_font_tiny, COLOR_TEXT, 1);
     }
     trace_ui_create("identity-sim");
 
@@ -34,11 +33,10 @@ static int create_network_identity_page(lv_obj_t *top)
         make_detail_label(network_identity_page, module_keys[i],
                           18, 263 + i * 23, 68, 17,
                           ui_font_tiny, COLOR_MUTED);
-        network_identity_module_values[i] = make_detail_label(
+        network_identity_module_values[i] = make_scrolling_detail_label(
                           network_identity_page, "--",
                           88, 263 + i * 23, 214, 17,
-                          ui_font_tiny, COLOR_TEXT);
-        right_align_label_text(network_identity_module_values[i]);
+                          ui_font_tiny, COLOR_TEXT, 1);
     }
     for (int i = 0; i < 6; i++) {
         if (!network_identity_sim_values[i]) {

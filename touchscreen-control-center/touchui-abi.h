@@ -36,6 +36,7 @@ typedef uint32_t (*obj_get_child_cnt_fn)(const lv_obj_t *obj);
 typedef lv_obj_t *(*obj_get_child_fn)(const lv_obj_t *obj, int32_t id);
 typedef int (*obj_has_flag_query_fn)(const lv_obj_t *obj, uint32_t flag);
 typedef void (*label_set_text_fn)(lv_obj_t *obj, const char *text);
+typedef const char *(*label_get_text_fn)(const lv_obj_t *obj);
 typedef void (*label_set_long_mode_fn)(lv_obj_t *obj, int mode);
 typedef void (*obj_set_size_fn)(lv_obj_t *obj, int32_t w, int32_t h);
 typedef void (*obj_set_pos_fn)(lv_obj_t *obj, int32_t x, int32_t y);
@@ -91,6 +92,7 @@ typedef void (*chart_refresh_fn)(lv_obj_t *chart);
 #define LV_ALIGN_CENTER 9
 #define LV_EVENT_CLICKED 7
 #define LV_LABEL_LONG_WRAP 0
+#define LV_LABEL_LONG_SCROLL_CIRCULAR 3
 #define LV_LABEL_LONG_CLIP 4
 #define LV_TEXT_ALIGN_CENTER 1
 #define LV_TEXT_ALIGN_RIGHT 2

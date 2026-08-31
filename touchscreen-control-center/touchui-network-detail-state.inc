@@ -37,7 +37,7 @@ static void refresh_network_detail_ui(void)
     snprintf(text, sizeof(text), "%s · %s · %s",
              short_operator_name(modem->operator_name),
              modem->type[0] ? modem->type : "--", band);
-    lv_label_set_text_p(network_detail_band_label, text);
+    set_label_text_if_changed(network_detail_band_label, text);
 
     if (network_detail_radio_page) {
     format_metric_int(modem->rsrp, rsrp, sizeof(rsrp));
@@ -87,13 +87,13 @@ static void refresh_network_detail_ui(void)
     snprintf(interfaces_text, sizeof(interfaces_text), "v4 %s · v6 %s",
              modem->ipv4_device[0] ? modem->ipv4_device : "--",
              modem->ipv6_device[0] ? modem->ipv6_device : "--");
-    lv_label_set_text_p(network_detail_address_values[0], ipv4);
-    lv_label_set_text_p(network_detail_address_values[1], ipv6);
-    lv_label_set_text_p(network_detail_address_values[2], interfaces_text);
-    lv_label_set_text_p(network_detail_address_values[3],
-                        modem->ipv4_dns[0] ? modem->ipv4_dns : "--");
-    lv_label_set_text_p(network_detail_address_values[4],
-                        modem->ipv6_dns[0] ? modem->ipv6_dns : "--");
+    set_label_text_if_changed(network_detail_address_values[0], ipv4);
+    set_label_text_if_changed(network_detail_address_values[1], ipv6);
+    set_label_text_if_changed(network_detail_address_values[2], interfaces_text);
+    set_label_text_if_changed(network_detail_address_values[3],
+                              modem->ipv4_dns[0] ? modem->ipv4_dns : "--");
+    set_label_text_if_changed(network_detail_address_values[4],
+                              modem->ipv6_dns[0] ? modem->ipv6_dns : "--");
 
     if (!modem->online) safe_copy(registration, sizeof(registration), "未注册");
     else safe_copy(registration, sizeof(registration),
@@ -138,26 +138,26 @@ static void refresh_network_detail_ui(void)
                  modem->ambr_dl, modem->ambr_ul);
     else safe_copy(qos_ambr, sizeof(qos_ambr), "--");
     format_qos_sample(modem->qos_sampled_at, qos_sample, sizeof(qos_sample));
-    lv_label_set_text_p(network_detail_path_values[0], registration);
-    lv_label_set_text_p(network_detail_path_values[1], path_status);
-    lv_label_set_text_p(network_detail_path_values[2], path_quality);
-    lv_label_set_text_p(network_detail_path_values[3], qos_qci);
-    lv_label_set_text_p(network_detail_path_values[4], qos_ambr);
-    lv_label_set_text_p(network_detail_path_values[5], qos_sample);
+    set_label_text_if_changed(network_detail_path_values[0], registration);
+    set_label_text_if_changed(network_detail_path_values[1], path_status);
+    set_label_text_if_changed(network_detail_path_values[2], path_quality);
+    set_label_text_if_changed(network_detail_path_values[3], qos_qci);
+    set_label_text_if_changed(network_detail_path_values[4], qos_ambr);
+    set_label_text_if_changed(network_detail_path_values[5], qos_sample);
     }
 
     if (network_identity_page) {
-    lv_label_set_text_p(network_identity_sim_values[0], sim_type_text(modem));
-    lv_label_set_text_p(network_identity_sim_values[1],
-                        modem->sim_ready ? "已就绪" : "未就绪");
-    lv_label_set_text_p(network_identity_sim_values[2],
-                        modem->msisdn[0] ? modem->msisdn : "--");
-    lv_label_set_text_p(network_identity_sim_values[3],
-                        modem->iccid[0] ? modem->iccid : "--");
-    lv_label_set_text_p(network_identity_sim_values[4],
-                        modem->imsi[0] ? modem->imsi : "--");
-    lv_label_set_text_p(network_identity_sim_values[5],
-                        modem->imei[0] ? modem->imei : "--");
+    set_label_text_if_changed(network_identity_sim_values[0], sim_type_text(modem));
+    set_label_text_if_changed(network_identity_sim_values[1],
+                              modem->sim_ready ? "已就绪" : "未就绪");
+    set_label_text_if_changed(network_identity_sim_values[2],
+                              modem->msisdn[0] ? modem->msisdn : "--");
+    set_label_text_if_changed(network_identity_sim_values[3],
+                              modem->iccid[0] ? modem->iccid : "--");
+    set_label_text_if_changed(network_identity_sim_values[4],
+                              modem->imsi[0] ? modem->imsi : "--");
+    set_label_text_if_changed(network_identity_sim_values[5],
+                              modem->imei[0] ? modem->imei : "--");
     snprintf(module_text, sizeof(module_text), "%s · %s",
              network_module_ids[network_detail_index],
              network_slot_titles[network_detail_index]);
@@ -170,17 +170,17 @@ static void refresh_network_detail_ui(void)
     else snprintf(debug_text, sizeof(debug_text), "%s · %s",
                   modem->debug_transport[0] ? modem->debug_transport : "ADB",
                   modem->debug_available ? "可用" : "不可用");
-    lv_label_set_text_p(network_identity_module_values[0], module_text);
-    lv_label_set_text_p(network_identity_module_values[1],
-                        modem->ifname[0] ? modem->ifname : "--");
-    lv_label_set_text_p(network_identity_module_values[2],
-                        modem->wan_interface[0] ? modem->wan_interface : "--");
-    lv_label_set_text_p(network_identity_module_values[3],
-                        modem->transport[0] ? modem->transport : "--");
-    lv_label_set_text_p(network_identity_module_values[4], usb_text);
-    lv_label_set_text_p(network_identity_module_values[5], debug_text);
-    lv_label_set_text_p(network_identity_module_values[6],
-                        modem->debug_serial[0] ? modem->debug_serial : "--");
+    set_label_text_if_changed(network_identity_module_values[0], module_text);
+    set_label_text_if_changed(network_identity_module_values[1],
+                              modem->ifname[0] ? modem->ifname : "--");
+    set_label_text_if_changed(network_identity_module_values[2],
+                              modem->wan_interface[0] ? modem->wan_interface : "--");
+    set_label_text_if_changed(network_identity_module_values[3],
+                              modem->transport[0] ? modem->transport : "--");
+    set_label_text_if_changed(network_identity_module_values[4], usb_text);
+    set_label_text_if_changed(network_identity_module_values[5], debug_text);
+    set_label_text_if_changed(network_identity_module_values[6],
+                              modem->debug_serial[0] ? modem->debug_serial : "--");
     }
 }
 

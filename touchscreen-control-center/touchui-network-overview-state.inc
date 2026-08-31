@@ -22,11 +22,11 @@ static void refresh_network_ui(void)
         set_network_dot_color(i, modem->valid ? dot_color : COLOR_MUTED);
         set_stock_signal_icon(&network_signal_icon[i], modem->valid,
                               modem->online, modem->bars, modem->roaming);
-        lv_label_set_text_p(network_summary_label[i], status.valid ?
-                            short_operator_name(modem->operator_name) : "读取中…");
+        set_label_text_if_changed(network_summary_label[i], status.valid ?
+                                  short_operator_name(modem->operator_name) : "读取中…");
         short_band_name(modem->band, band, sizeof(band));
         snprintf(text, sizeof(text), "%s · %s", modem->type[0] ? modem->type : "离线", band);
-        lv_label_set_text_p(network_signal_label[i], status.valid ? text : "-- · --");
+        set_label_text_if_changed(network_signal_label[i], status.valid ? text : "-- · --");
         format_metric_int(modem->rsrp, rsrp, sizeof(rsrp));
         if (status.valid && strcmp(rsrp, "--") != 0)
             snprintf(text, sizeof(text), "%s dBm", rsrp);

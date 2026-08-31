@@ -5,6 +5,7 @@ static int resolve_lvgl(void)
     RESOLVE(lv_obj_create); RESOLVE(lv_obj_del); RESOLVE(lv_obj_get_child_cnt); RESOLVE(lv_obj_get_child);
     RESOLVE(lv_obj_has_flag);
     RESOLVE(lv_btn_create); RESOLVE(lv_label_create); RESOLVE(lv_label_set_text);
+    RESOLVE(lv_label_get_text);
     RESOLVE(lv_img_create); RESOLVE(lv_img_set_src); RESOLVE(lv_img_set_zoom);
     RESOLVE(lv_imgbtn_create); RESOLVE(lv_imgbtn_set_src);
     RESOLVE(lv_label_set_long_mode); RESOLVE(lv_obj_set_size); RESOLVE(lv_obj_set_pos);

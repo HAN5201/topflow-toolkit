@@ -22,6 +22,16 @@ static lv_obj_t *make_single_line_label(lv_obj_t *parent, const char *text,
     return label;
 }
 
+static void set_label_text_if_changed(lv_obj_t *label, const char *text)
+{
+    const char *current;
+    if (!label || !lv_label_set_text_p) return;
+    if (!text) text = "";
+    current = lv_label_get_text_p ? lv_label_get_text_p(label) : NULL;
+    if (current && !strcmp(current, text)) return;
+    lv_label_set_text_p(label, text);
+}
+
 static void center_button_label(lv_obj_t *label)
 {
     if (lv_obj_update_layout_p)

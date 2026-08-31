@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- 触屏网络仪表将 `China Broadnet` / `CBN` 归一化显示为“广电”；
+- 运营商、详情摘要、地址和身份等单行字段仅在溢出时循环滚动，且不再被每秒状态刷新重置动画。
+
 ## v0.1.1 — 2026-08-30
 
 - 不再把 `/proc/mounts` 的 source 字段当作单文件 bind mount 的原始文件路径；

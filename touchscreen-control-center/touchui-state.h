@@ -17,6 +17,7 @@ static obj_get_child_cnt_fn lv_obj_get_child_cnt_p;
 static obj_get_child_fn lv_obj_get_child_p;
 static obj_has_flag_query_fn lv_obj_has_flag_p;
 static label_set_text_fn lv_label_set_text_p;
+static label_get_text_fn lv_label_get_text_p;
 static label_set_long_mode_fn lv_label_set_long_mode_p;
 static obj_set_size_fn lv_obj_set_size_p;
 static obj_set_pos_fn lv_obj_set_pos_p;

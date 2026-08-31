@@ -10,6 +10,7 @@ static const char *short_operator_name(const char *name)
     if (contains_text_ci(name, "unicom")) return "联通";
     if (contains_text_ci(name, "mobile") || contains_text_ci(name, "cmcc")) return "移动";
     if (contains_text_ci(name, "telecom") || contains_text_ci(name, "chn-ct")) return "电信";
+    if (contains_text_ci(name, "broadnet") || contains_text_ci(name, "cbn")) return "广电";
     return name && *name ? name : "未知运营商";
 }
 
@@ -123,6 +124,19 @@ static lv_obj_t *make_detail_label(lv_obj_t *parent, const char *text,
     if (label && font && real_obj_set_style_text_font)
         real_obj_set_style_text_font(label, font, 0);
     set_text_color(label, color);
+    return label;
+}
+
+static lv_obj_t *make_scrolling_detail_label(lv_obj_t *parent, const char *text,
+                                             int x, int y, int w, int h,
+                                             const void *font, uint32_t color,
+                                             int align_right)
+{
+    lv_obj_t *label = make_detail_label(parent, text, x, y, w, h, font, color);
+    if (!label) return NULL;
+    if (lv_label_set_long_mode_p)
+        lv_label_set_long_mode_p(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    if (align_right) right_align_label_text(label);
     return label;
 }
 

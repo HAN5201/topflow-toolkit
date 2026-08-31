@@ -67,11 +67,10 @@ static int create_network_detail_tab_content(int tab)
                 make_detail_label(network_detail_network_page, keys[i],
                                   18, 31 + i * 18, 42, 17,
                                   ui_font_tiny, COLOR_MUTED);
-                network_detail_address_values[i] = make_detail_label(
+                network_detail_address_values[i] = make_scrolling_detail_label(
                                   network_detail_network_page, "--",
                                   62, 31 + i * 18, 240, 17,
-                                  ui_font_tiny, COLOR_TEXT);
-                right_align_label_text(network_detail_address_values[i]);
+                                  ui_font_tiny, COLOR_TEXT, 1);
             }
         }
         make_panel(network_detail_network_page, 8, 136, 304, 157, COLOR_CARD);
@@ -85,11 +84,10 @@ static int create_network_detail_tab_content(int tab)
                 make_detail_label(network_detail_network_page, keys[i],
                                   18, 167 + i * 19, 64, 17,
                                   ui_font_tiny, COLOR_MUTED);
-                network_detail_path_values[i] = make_detail_label(
+                network_detail_path_values[i] = make_scrolling_detail_label(
                                   network_detail_network_page, "--",
                                   84, 167 + i * 19, 218, 17,
-                                  ui_font_tiny, COLOR_TEXT);
-                right_align_label_text(network_detail_path_values[i]);
+                                  ui_font_tiny, COLOR_TEXT, 1);
             }
         }
         for (int i = 0; i < 5; i++) {
@@ -246,8 +244,9 @@ static int create_network_detail_page(lv_obj_t *top)
     }
     network_detail_status_label = make_detail_label(network_detail_page, "--",
         34, 60, 42, 17, ui_font_tiny, COLOR_TEXT);
-    network_detail_band_label = make_detail_label(network_detail_page, "-- · -- · --",
-        82, 60, 136, 17, ui_font_tiny, COLOR_MUTED);
+    network_detail_band_label = make_scrolling_detail_label(
+        network_detail_page, "-- · -- · --", 82, 60, 136, 17,
+        ui_font_tiny, COLOR_MUTED, 0);
     network_detail_sim_label = make_detail_label(network_detail_page, "SIM -- >",
         226, 60, 76, 17, ui_font_tiny, COLOR_MUTED);
     right_align_label_text(network_detail_sim_label);

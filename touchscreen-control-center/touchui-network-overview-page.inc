@@ -22,12 +22,11 @@ static int create_network_page(lv_obj_t *top)
         }
         network_header_label[i] = make_detail_label(network_page,
             network_module_titles[i], 36, y + 8, 158, 22, ui_font_small, COLOR_TEXT);
-        network_summary_label[i] = make_detail_label(network_page, "读取中…",
-            212, y + 10, 60, 18, ui_font_tiny, COLOR_MUTED);
-        right_align_label_text(network_summary_label[i]);
+        network_summary_label[i] = make_scrolling_detail_label(network_page, "读取中…",
+            212, y + 10, 60, 18, ui_font_tiny, COLOR_MUTED, 1);
         network_signal_icon[i] = make_stock_signal_icon(network_page, 282, y + 8);
-        network_signal_label[i] = make_detail_label(network_page, "-- · --",
-            18, y + 98, 116, 18, ui_font_tiny, COLOR_MUTED);
+        network_signal_label[i] = make_scrolling_detail_label(network_page, "-- · --",
+            18, y + 98, 116, 18, ui_font_tiny, COLOR_MUTED, 0);
         make_network_rule(network_page, 18, y + 37, 284, 1);
         network_traffic_label[i] = make_detail_label(network_page, "-- dBm",
             18, y + 44, 130, 31, ui_font_large, COLOR_TEXT);
