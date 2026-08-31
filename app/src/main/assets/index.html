@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topflow MU5252 控制面板</title>
+    <style>
+        body {
+            background-color: #F2F2F2;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 16px;
+            color: #333;
+        }
+        .card {
+            background: #FFFFFF;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        button {
+            background: #007AFF;
+            color: #FFF;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+        }
+        button:active { opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h3>Topflow MU5252 快捷控制</h3>
+        <button onclick="callAdb('reboot')">重启随身 WiFi</button>
+        <button onclick="openWebSSH()">开启 WebSSH 终端 (7681)</button>
+    </div>
+
+    <script>
+        function callAdb(cmd) {
+            if (window.TopflowBridge) {
+                window.TopflowBridge.execAdb(cmd);
+            } else {
+                alert("请在 Topflow 安装器 APP 内运行");
+            }
+        }
+
+        function openWebSSH() {
+            if (window.TopflowBridge) {
+                window.TopflowBridge.loadWebSSH();
+            } else {
+                alert("请在 Topflow 安装器 APP 内运行");
+            }
+        }
+    </script>
+</body>
+</html>
