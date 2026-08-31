@@ -53,7 +53,7 @@ static void draw_traffic_arrow(unsigned char *pixels, int upward,
         for (x = 1; x < TRAFFIC_ICON_WIDTH - 1; x++) {
             int draw = 0;
             if (logical_y <= 6) {
-                int half_width = 6 - logical_y;
+                int half_width = logical_y - 1;
                 draw = x >= 6 - half_width && x <= 6 + half_width;
             } else if (x >= 5 && x <= 7) {
                 draw = 1;

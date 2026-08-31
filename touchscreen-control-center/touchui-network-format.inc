@@ -14,6 +14,27 @@ static const char *display_operator_name(const char *name)
     return name && *name ? name : "未知运营商";
 }
 
+static int operator_name_should_scroll(const char *name)
+{
+    return strcmp(name, "中国联通") && strcmp(name, "中国移动") &&
+           strcmp(name, "中国电信") && strcmp(name, "中国广电") &&
+           strcmp(name, "未知运营商") && strcmp(name, "读取中…");
+}
+
+static void set_operator_label_text(lv_obj_t *label, const char *text)
+{
+    const char *current;
+    if (!label || !lv_label_set_text_p) return;
+    if (!text) text = "未知运营商";
+    current = lv_label_get_text_p ? lv_label_get_text_p(label) : NULL;
+    if (current && !strcmp(current, text)) return;
+    if (lv_label_set_long_mode_p)
+        lv_label_set_long_mode_p(label, operator_name_should_scroll(text) ?
+                                LV_LABEL_LONG_SCROLL_CIRCULAR :
+                                LV_LABEL_LONG_CLIP);
+    lv_label_set_text_p(label, text);
+}
+
 static void short_band_name(const char *band, char *out, size_t size)
 {
     const char *number;

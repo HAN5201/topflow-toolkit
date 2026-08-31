@@ -22,8 +22,8 @@ static void refresh_network_ui(void)
         set_network_dot_color(i, modem->valid ? dot_color : COLOR_MUTED);
         set_stock_signal_icon(&network_signal_icon[i], modem->valid,
                               modem->online, modem->bars, modem->roaming);
-        set_label_text_if_changed(network_summary_label[i], status.valid ?
-                                  display_operator_name(modem->operator_name) : "读取中…");
+        set_operator_label_text(network_summary_label[i], status.valid ?
+                                display_operator_name(modem->operator_name) : "读取中…");
         short_band_name(modem->band, band, sizeof(band));
         snprintf(text, sizeof(text), "%s · %s", modem->type[0] ? modem->type : "离线", band);
         set_label_text_if_changed(network_signal_label[i], status.valid ? text : "-- · --");
