@@ -19,13 +19,25 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: 配置 Gradle 8.2 环境
-      uses: gradle/gradle-build-action@v3
-      with:
-        gradle-version: '8.2'
+    - name: 配置 Android SDK
+      uses: android-actions/setup-android@v3
 
-    - name: 执行 APK 编译
-      run: gradle assembleDebug --no-daemon
+    - name: 补全 Gradle Wrapper 配置并编译
+      run: |
+        mkdir -p gradle/wrapper
+        cat << 'EOF' > gradle/wrapper/gradle-wrapper.properties
+        distributionBase=GRADLE_USER_HOME
+        distributionPath=wrapper/dists
+        distributionUrl=https\://services.gradle.org/distributions/gradle-8.2-bin.zip
+        networkTimeout=10000
+        validateDistributionUrl=true
+        zipStoreBase=GRADLE_USER_HOME
+        zipStorePath=wrapper/dists
+        EOF
+
+        gradle wrapper --gradle-version 8.2
+        chmod +x gradlew
+        ./gradlew assembleDebug --stacktrace --no-daemon
 
     - name: 上传 APK 到 Artifacts 产物区
       uses: actions/upload-artifact@v4
