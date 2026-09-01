@@ -19,35 +19,35 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: 独立清理并写入完整结构
+    - name: 独立清理并写入完整项目结构
       run: |
         rm -rf *
         mkdir -p app/src/main/java/com/topflow/toolkit
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/res/values
 
-        # Settings
+        # 写入 settings.gradle
         echo "pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }" > settings.gradle
         echo "dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }" >> settings.gradle
         echo "rootProject.name = 'TopflowToolkitApp'" >> settings.gradle
         echo "include ':app'" >> settings.gradle
 
-        # Root build.gradle
+        # 写入根目录 build.gradle
         echo "buildscript { repositories { google(); mavenCentral() }; dependencies { classpath 'com.android.tools.build:gradle:8.1.1' } }" > build.gradle
         echo "task clean(type: Delete) { delete rootProject.buildDir }" >> build.gradle
 
-        # App build.gradle
+        # 写入 app/build.gradle
         echo "plugins { id 'com.android.application' }" > app/build.gradle
         echo "android { namespace 'com.topflow.toolkit'; compileSdk 34; defaultConfig { applicationId 'com.topflow.toolkit'; minSdk 24; targetSdk 34; versionCode 1; versionName '1.0.0' }; compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 } }" >> app/build.gradle
         echo "dependencies { implementation 'androidx.appcompat:appcompat:1.6.1'; implementation 'com.google.android.material:material:1.9.0'; implementation 'androidx.webkit:webkit:1.8.0' }" >> app/build.gradle
 
-        # Manifest
+        # 写入 AndroidManifest.xml
         echo '<?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET" /><application android:allowBackup="true" android:usesCleartextTraffic="true" android:label="Topflow工具箱" android:supportsRtl="true" android:theme="@style/Theme.AppCompat.Light.NoActionBar"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
 
-        # Layout
+        # 写入 activity_main.xml 布局
         echo '<?xml version="1.0" encoding="utf-8"?><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent"><WebView android:id="@+id/webview" android:layout_width="match_parent" android:layout_height="match_parent" /></RelativeLayout>' > app/src/main/res/layout/activity_main.xml
 
-        # MainActivity.java
+        # 写入 MainActivity.java
         cat << 'JAVA_END' > app/src/main/java/com/topflow/toolkit/MainActivity.java
 package com.topflow.toolkit;
 
@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
 }
 JAVA_END
 
-        # AdbManager.java
+        # 写入 AdbManager.java
         cat << 'JAVA_END' > app/src/main/java/com/topflow/toolkit/AdbManager.java
 package com.topflow.toolkit;
 
@@ -171,14 +171,23 @@ public class AdbManager {
 }
 JAVA_END
 
-    - name: 搭建 Wrapper 并构建
+    - name: 搭建 Gradle Wrapper 并编译 APK
       run: |
         gradle wrapper --gradle-version 8.1.1
         chmod +x gradlew
         ./gradlew assembleDebug --no-daemon
 
-    - name: 上传打包好的 APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: Topflow-Toolkit-App
-        path: "**/build/outputs/apk/debug/*.apk"
+    - name: 生成直链下载地址并打印日志
+      run: |
+        APK_PATH=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
+        if [ -f "$APK_PATH" ]; then
+          echo "=========================================="
+          echo "APK 编译成功！路径: $APK_PATH"
+          echo "正在上传生成临时下载直链..."
+          echo "=========================================="
+          curl -F "file=@$APK_PATH" https://file.io
+          echo -e "\n=========================================="
+        else
+          echo "错误：未找到生成的 APK 文件！"
+          exit 1
+        fi
