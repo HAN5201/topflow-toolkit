@@ -19,17 +19,17 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: 初始化 Gradle 8.2 环境
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '8.2'
+    - name: 自动生成并赋予 Gradle 执行权限
+      run: |
+        gradle wrapper
+        chmod +x gradlew
 
     - name: 编译 Debug APK
-      run: gradle assembleDebug --stacktrace 
+      run: ./gradlew assembleDebug --stacktrace
 
-    - name: 上传 APK 产物
+    - name: 上传打包好的 APK 产物
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: Topflow-Toolkit-App
-        path: "**/build/outputs/apk/debug/*.apk"
+        path: "app/build/outputs/apk/debug/*.apk"
