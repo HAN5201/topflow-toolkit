@@ -48,128 +48,86 @@ jobs:
         echo '<?xml version="1.0" encoding="utf-8"?><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent"><WebView android:id="@+id/webview" android:layout_width="match_parent" android:layout_height="match_parent" /></RelativeLayout>' > app/src/main/res/layout/activity_main.xml
 
         # 写入 MainActivity.java
-        cat << 'JAVA_END' > app/src/main/java/com/topflow/toolkit/MainActivity.java
-package com.topflow.toolkit;
-
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.webkit.JavascriptInterface;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
-
-public class MainActivity extends AppCompatActivity {
-    private WebView webView;
-    private static final String TOPFLOW_IP = "192.168.0.1";
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        webView = findViewById(R.id.webview);
-        WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
-        settings.setDatabaseEnabled(true);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-
-        webView.addJavascriptInterface(new TopflowJSBridge(), "TopflowBridge");
-        webView.setWebViewClient(new WebViewClient());
-        webView.loadUrl("http://" + TOPFLOW_IP);
-    }
-
-    public class TopflowJSBridge {
-        @JavascriptInterface
-        public void execAdb(String command) {
-            AdbManager.execCmd(command, new AdbManager.AdbCallback() {
-                @Override
-                public void onSuccess(String output) { showToast("执行成功: " + output); }
-                @Override
-                public void onError(String error) { showToast("错误: " + error); }
-            });
-        }
-
-        @JavascriptInterface
-        public void loadWebSSH() {
-            AdbManager.execCmd("nohup ttyd -p 7681 -c root:123456 login >/dev/null 2>&1 &", new AdbManager.AdbCallback() {
-                @Override
-                public void onSuccess(String output) {
-                    new Handler(Looper.getMainLooper()).postDelayed(() ->
-                        webView.loadUrl("http://" + TOPFLOW_IP + ":7681"), 1000
-                    );
-                }
-                @Override
-                public void onError(String error) { showToast("无法启动 WebSSH: " + error); }
-            });
-        }
-    }
-
-    private void showToast(String text) {
-        new Handler(Looper.getMainLooper()).post(() ->
-            Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show()
-        );
-    }
-}
-JAVA_END
+        echo 'package com.topflow.toolkit;' > app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo 'import android.os.Bundle;' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo 'import android.os.Handler;' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo 'import android.os.Looper;' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo 'import android.webkit.JavascriptInterface;' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo 'import android.webkit.WebSettings;' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo 'import android.webkit.WebView;' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo 'import android.webkit.WebViewClient;' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo 'import android.widget.Toast;' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo 'import androidx.appcompat.app.AppCompatActivity;' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo 'public class MainActivity extends AppCompatActivity {' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '    private WebView webView;' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '    private static final String TOPFLOW_IP = "192.168.0.1";' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '    @Override protected void onCreate(Bundle savedInstanceState) {' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        super.onCreate(savedInstanceState);' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        setContentView(R.layout.activity_main);' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        webView = findViewById(R.id.webview);' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        WebSettings settings = webView.getSettings();' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        settings.setJavaScriptEnabled(true);' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        settings.setDomStorageEnabled(true);' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        settings.setDatabaseEnabled(true);' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        webView.addJavascriptInterface(new TopflowJSBridge(), "TopflowBridge");' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        webView.setWebViewClient(new WebViewClient());' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        webView.loadUrl("http://" + TOPFLOW_IP);' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '    }' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '    public class TopflowJSBridge {' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        @JavascriptInterface public void execAdb(String command) {' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '            AdbManager.execCmd(command, new AdbManager.AdbCallback() {' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '                @Override public void onSuccess(String output) { showToast("成功: " + output); }' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '                @Override public void onError(String error) { showToast("错误: " + error); }' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '            });' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        }' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        @JavascriptInterface public void loadWebSSH() {' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '            AdbManager.execCmd("nohup ttyd -p 7681 -c root:123456 login >/dev/null 2>&1 &", new AdbManager.AdbCallback() {' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '                @Override public void onSuccess(String output) {' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '                    new Handler(Looper.getMainLooper()).postDelayed(() -> webView.loadUrl("http://" + TOPFLOW_IP + ":7681"), 1000);' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '                }' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '                @Override public void onError(String error) { showToast("无法启动 WebSSH: " + error); }' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '            });' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        }' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '    }' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '    private void showToast(String text) {' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '        new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show());' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '    }' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
+        echo '}' >> app/src/main/java/com/topflow/toolkit/MainActivity.java
 
         # 写入 AdbManager.java
-        cat << 'JAVA_END' > app/src/main/java/com/topflow/toolkit/AdbManager.java
-package com.topflow.toolkit;
-
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-
-public class AdbManager {
-    private static final String DEFAULT_HOST = "192.168.0.1";
-    private static final int DEFAULT_PORT = 5555;
-    private static final int TIMEOUT_MS = 4000;
-
-    public interface AdbCallback {
-        void onSuccess(String output);
-        void onError(String error);
-    }
-
-    public static void execCmd(String command, AdbCallback callback) {
-        new Thread(() -> {
-            Socket socket = null;
-            try {
-                socket = new Socket();
-                socket.connect(new InetSocketAddress(DEFAULT_HOST, DEFAULT_PORT), TIMEOUT_MS);
-                socket.setSoTimeout(TIMEOUT_MS);
-
-                OutputStream out = socket.getOutputStream();
-                InputStream in = socket.getInputStream();
-
-                String packet = "shell:" + command + "\n";
-                out.write(packet.getBytes(StandardCharsets.UTF_8));
-                out.flush();
-
-                byte[] buffer = new byte[2048];
-                int bytesRead = in.read(buffer);
-
-                if (bytesRead > 0) {
-                    callback.onSuccess(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
-                } else {
-                    callback.onSuccess("指令下发成功");
-                }
-            } catch (Exception e) {
-                callback.onError("ADB 连接超时");
-            } finally {
-                try {
-                    if (socket != null && !socket.isClosed()) socket.close();
-                } catch (Exception ignored) {}
-            }
-        }).start();
-    }
-}
-JAVA_END
+        echo 'package com.topflow.toolkit;' > app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo 'import java.io.InputStream;' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo 'import java.io.OutputStream;' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo 'import java.net.InetSocketAddress;' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo 'import java.net.Socket;' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo 'import java.nio.charset.StandardCharsets;' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo 'public class AdbManager {' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '    private static final String DEFAULT_HOST = "192.168.0.1";' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '    private static final int DEFAULT_PORT = 5555;' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '    private static final int TIMEOUT_MS = 4000;' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '    public interface AdbCallback { void onSuccess(String output); void onError(String error); }' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '    public static void execCmd(String command, AdbCallback callback) {' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '        new Thread(() -> {' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '            Socket socket = null;' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '            try {' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '                socket = new Socket();' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '                socket.connect(new InetSocketAddress(DEFAULT_HOST, DEFAULT_PORT), TIMEOUT_MS);' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '                socket.setSoTimeout(TIMEOUT_MS);' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '                OutputStream out = socket.getOutputStream();' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '                InputStream in = socket.getInputStream();' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '                String packet = "shell:" + command + "\n";' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '                out.write(packet.getBytes(StandardCharsets.UTF_8));' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '                out.flush();' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '                byte[] buffer = new byte[2048];' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '                int bytesRead = in.read(buffer);' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '                if (bytesRead > 0) { callback.onSuccess(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8)); }' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '                else { callback.onSuccess("指令下发成功"); }' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '            } catch (Exception e) { callback.onError("ADB 连接超时"); }' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '            finally { try { if (socket != null && !socket.isClosed()) socket.close(); } catch (Exception ignored) {} }' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '        }).start();' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '    }' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
+        echo '}' >> app/src/main/java/com/topflow/toolkit/AdbManager.java
 
     - name: 搭建 Gradle Wrapper 并编译 APK
       run: |
@@ -191,4 +149,3 @@ JAVA_END
           echo "错误：未找到生成的 APK 文件！"
           exit 1
         fi
-        
