@@ -1,5 +1,3 @@
-name: Build Topflow Dedicated App
-
 on:
   push:
     branches: [ "main", "master" ]
@@ -19,13 +17,13 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: 配置指定版本的 Gradle
+    - name: 初始化 Gradle 8.2 环境
       uses: gradle/actions/setup-gradle@v3
       with:
-        gradle-version: '8.4'
+        gradle-version: '8.2'
 
     - name: 编译 Debug APK
-      run: gradle assembleDebug --stacktrace
+      run: gradle assembleDebug
 
     - name: 上传 APK 产物
       uses: actions/upload-artifact@v4
