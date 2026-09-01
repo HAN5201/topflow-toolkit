@@ -1,3 +1,5 @@
+name: Build Topflow Dedicated App
+
 on:
   push:
     branches: [ "main", "master" ]
