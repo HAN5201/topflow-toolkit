@@ -13,259 +13,171 @@ jobs:
     - name: 检出代码
       uses: actions/checkout@v4
 
-    - name: 配置 Java 17 环境
+    - name: 配置 Java 17
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: 强制清空旧源码并全新构建
+    - name: 独立清理并写入完整结构
       run: |
-        # 清空当前工作区所有旧文件，防止配置冲突
         rm -rf *
-        rm -rf .[^.]* || true
-
-        # 重新创建标准 Android 项目目录
         mkdir -p app/src/main/java/com/topflow/toolkit
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/res/values
 
-        # 1. 写入根目录 settings.gradle
-        cat << 'EOF' > settings.gradle
-        pluginManagement {
-            repositories {
-                google()
-                mavenCentral()
-                gradlePluginPortal()
-            }
+        # Settings
+        echo "pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }" > settings.gradle
+        echo "dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }" >> settings.gradle
+        echo "rootProject.name = 'TopflowToolkitApp'" >> settings.gradle
+        echo "include ':app'" >> settings.gradle
+
+        # Root build.gradle
+        echo "buildscript { repositories { google(); mavenCentral() }; dependencies { classpath 'com.android.tools.build:gradle:8.1.1' } }" > build.gradle
+        echo "task clean(type: Delete) { delete rootProject.buildDir }" >> build.gradle
+
+        # App build.gradle
+        echo "plugins { id 'com.android.application' }" > app/build.gradle
+        echo "android { namespace 'com.topflow.toolkit'; compileSdk 34; defaultConfig { applicationId 'com.topflow.toolkit'; minSdk 24; targetSdk 34; versionCode 1; versionName '1.0.0' }; compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 } }" >> app/build.gradle
+        echo "dependencies { implementation 'androidx.appcompat:appcompat:1.6.1'; implementation 'com.google.android.material:material:1.9.0'; implementation 'androidx.webkit:webkit:1.8.0' }" >> app/build.gradle
+
+        # Manifest
+        echo '<?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET" /><application android:allowBackup="true" android:usesCleartextTraffic="true" android:label="Topflow工具箱" android:supportsRtl="true" android:theme="@style/Theme.AppCompat.Light.NoActionBar"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
+
+        # Layout
+        echo '<?xml version="1.0" encoding="utf-8"?><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent"><WebView android:id="@+id/webview" android:layout_width="match_parent" android:layout_height="match_parent" /></RelativeLayout>' > app/src/main/res/layout/activity_main.xml
+
+        # MainActivity.java
+        cat << 'JAVA_END' > app/src/main/java/com/topflow/toolkit/MainActivity.java
+package com.topflow.toolkit;
+
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+    private WebView webView;
+    private static final String TOPFLOW_IP = "192.168.0.1";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        webView = findViewById(R.id.webview);
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
+        webView.addJavascriptInterface(new TopflowJSBridge(), "TopflowBridge");
+        webView.setWebViewClient(new WebViewClient());
+        webView.loadUrl("http://" + TOPFLOW_IP);
+    }
+
+    public class TopflowJSBridge {
+        @JavascriptInterface
+        public void execAdb(String command) {
+            AdbManager.execCmd(command, new AdbManager.AdbCallback() {
+                @Override
+                public void onSuccess(String output) { showToast("执行成功: " + output); }
+                @Override
+                public void onError(String error) { showToast("错误: " + error); }
+            });
         }
-        dependencyResolutionManagement {
-            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-            repositories {
-                google()
-                mavenCentral()
-            }
-        }
-        rootProject.name = "TopflowToolkitApp"
-        include ':app'
-        EOF
 
-        # 2. 写入根目录 build.gradle
-        cat << 'EOF' > build.gradle
-        buildscript {
-            repositories {
-                google()
-                mavenCentral()
-            }
-            dependencies {
-                classpath 'com.android.tools.build:gradle:8.1.1'
-            }
-        }
-        task clean(type: Delete) {
-            delete rootProject.buildDir
-        }
-        EOF
-
-        # 3. 写入 app/build.gradle
-        cat << 'EOF' > app/build.gradle
-        plugins {
-            id 'com.android.application'
-        }
-
-        android {
-            namespace 'com.topflow.toolkit'
-            compileSdk 34
-
-            defaultConfig {
-                applicationId "com.topflow.toolkit"
-                minSdk 24
-                targetSdk 34
-                versionCode 1
-                versionName "1.0.0"
-            }
-
-            compileOptions {
-                sourceCompatibility JavaVersion.VERSION_17
-                targetCompatibility JavaVersion.VERSION_17
-            }
-        }
-
-        dependencies {
-            implementation 'androidx.appcompat:appcompat:1.6.1'
-            implementation 'com.google.android.material:material:1.9.0'
-            implementation 'androidx.webkit:webkit:1.8.0'
-        }
-        EOF
-
-        # 4. 写入 AndroidManifest.xml
-        cat << 'EOF' > app/src/main/AndroidManifest.xml
-        <?xml version="1.0" encoding="utf-8"?>
-        <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-            <uses-permission android:name="android.permission.INTERNET" />
-            <application
-                android:allowBackup="true"
-                android:usesCleartextTraffic="true"
-                android:label="Topflow工具箱"
-                android:supportsRtl="true"
-                android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-                <activity
-                    android:name=".MainActivity"
-                    android:exported="true">
-                    <intent-filter>
-                        <action android:name="android.intent.action.MAIN" />
-                        <category android:name="android.intent.category.LAUNCHER" />
-                    </intent-filter>
-                </activity>
-            </application>
-        </manifest>
-        EOF
-
-        # 5. 写入 layout/activity_main.xml
-        cat << 'EOF' > app/src/main/res/layout/activity_main.xml
-        <?xml version="1.0" encoding="utf-8"?>
-        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <WebView
-                android:id="@+id/webview"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-        </RelativeLayout>
-        EOF
-
-        # 6. 写入 MainActivity.java
-        cat << 'EOF' > app/src/main/java/com/topflow/toolkit/MainActivity.java
-        package com.topflow.toolkit;
-
-        import android.os.Bundle;
-        import android.os.Handler;
-        import android.os.Looper;
-        import android.webkit.JavascriptInterface;
-        import android.webkit.WebSettings;
-        import android.webkit.WebView;
-        import android.webkit.WebViewClient;
-        import android.widget.Toast;
-        import androidx.appcompat.app.AppCompatActivity;
-
-        public class MainActivity extends AppCompatActivity {
-            private WebView webView;
-            private static final String TOPFLOW_IP = "192.168.0.1";
-
-            @Override
-            protected void onCreate(Bundle savedInstanceState) {
-                super.onCreate(savedInstanceState);
-                setContentView(R.layout.activity_main);
-
-                webView = findViewById(R.id.webview);
-                WebSettings settings = webView.getSettings();
-                settings.setJavaScriptEnabled(true);
-                settings.setDomStorageEnabled(true);
-                settings.setDatabaseEnabled(true);
-                settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-
-                webView.addJavascriptInterface(new TopflowJSBridge(), "TopflowBridge");
-                webView.setWebViewClient(new WebViewClient());
-                webView.loadUrl("http://" + TOPFLOW_IP);
-            }
-
-            public class TopflowJSBridge {
-                @JavascriptInterface
-                public void execAdb(String command) {
-                    AdbManager.execCmd(command, new AdbManager.AdbCallback() {
-                        @Override
-                        public void onSuccess(String output) { showToast("执行成功: " + output); }
-                        @Override
-                        public void onError(String error) { showToast("错误: " + error); }
-                    });
+        @JavascriptInterface
+        public void loadWebSSH() {
+            AdbManager.execCmd("nohup ttyd -p 7681 -c root:123456 login >/dev/null 2>&1 &", new AdbManager.AdbCallback() {
+                @Override
+                public void onSuccess(String output) {
+                    new Handler(Looper.getMainLooper()).postDelayed(() ->
+                        webView.loadUrl("http://" + TOPFLOW_IP + ":7681"), 1000
+                    );
                 }
+                @Override
+                public void onError(String error) { showToast("无法启动 WebSSH: " + error); }
+            });
+        }
+    }
 
-                @JavascriptInterface
-                public void loadWebSSH() {
-                    AdbManager.execCmd("nohup ttyd -p 7681 -c root:123456 login >/dev/null 2>&1 &", new AdbManager.AdbCallback() {
-                        @Override
-                        public void onSuccess(String output) {
-                            new Handler(Looper.getMainLooper()).postDelayed(() ->
-                                webView.loadUrl("http://" + TOPFLOW_IP + ":7681"), 1000
-                            );
-                        }
-                        @Override
-                        public void onError(String error) { showToast("无法启动 WebSSH: " + error); }
-                    });
+    private void showToast(String text) {
+        new Handler(Looper.getMainLooper()).post(() ->
+            Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show()
+        );
+    }
+}
+JAVA_END
+
+        # AdbManager.java
+        cat << 'JAVA_END' > app/src/main/java/com/topflow/toolkit/AdbManager.java
+package com.topflow.toolkit;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+
+public class AdbManager {
+    private static final String DEFAULT_HOST = "192.168.0.1";
+    private static final int DEFAULT_PORT = 5555;
+    private static final int TIMEOUT_MS = 4000;
+
+    public interface AdbCallback {
+        void onSuccess(String output);
+        void onError(String error);
+    }
+
+    public static void execCmd(String command, AdbCallback callback) {
+        new Thread(() -> {
+            Socket socket = null;
+            try {
+                socket = new Socket();
+                socket.connect(new InetSocketAddress(DEFAULT_HOST, DEFAULT_PORT), TIMEOUT_MS);
+                socket.setSoTimeout(TIMEOUT_MS);
+
+                OutputStream out = socket.getOutputStream();
+                InputStream in = socket.getInputStream();
+
+                String packet = "shell:" + command + "\n";
+                out.write(packet.getBytes(StandardCharsets.UTF_8));
+                out.flush();
+
+                byte[] buffer = new byte[2048];
+                int bytesRead = in.read(buffer);
+
+                if (bytesRead > 0) {
+                    callback.onSuccess(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
+                } else {
+                    callback.onSuccess("指令下发成功");
                 }
+            } catch (Exception e) {
+                callback.onError("ADB 连接超时");
+            } finally {
+                try {
+                    if (socket != null && !socket.isClosed()) socket.close();
+                } catch (Exception ignored) {}
             }
+        }).start();
+    }
+}
+JAVA_END
 
-            private void showToast(String text) {
-                new Handler(Looper.getMainLooper()).post(() ->
-                    Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show()
-                );
-            }
-        }
-        EOF
+    - name: 搭建 Wrapper 并构建
+      run: |
+        gradle wrapper --gradle-version 8.1.1
+        chmod +x gradlew
+        ./gradlew assembleDebug --no-daemon
 
-        # 7. 写入 AdbManager.java
-        cat << 'EOF' > app/src/main/java/com/topflow/toolkit/AdbManager.java
-        package com.topflow.toolkit;
-
-        import java.io.InputStream;
-        import java.io.OutputStream;
-        import java.net.InetSocketAddress;
-        import java.net.Socket;
-        import java.nio.charset.StandardCharsets;
-
-        public class AdbManager {
-            private static final String DEFAULT_HOST = "192.168.0.1";
-            private static final int DEFAULT_PORT = 5555;
-            private static final int TIMEOUT_MS = 4000;
-
-            public interface AdbCallback {
-                void onSuccess(String output);
-                void onError(String error);
-            }
-
-            public static void execCmd(String command, AdbCallback callback) {
-                new Thread(() -> {
-                    Socket socket = null;
-                    try {
-                        socket = new Socket();
-                        socket.connect(new InetSocketAddress(DEFAULT_HOST, DEFAULT_PORT), TIMEOUT_MS);
-                        socket.setSoTimeout(TIMEOUT_MS);
-
-                        OutputStream out = socket.getOutputStream();
-                        InputStream in = socket.getInputStream();
-
-                        String packet = "shell:" + command + "\n";
-                        out.write(packet.getBytes(StandardCharsets.UTF_8));
-                        out.flush();
-
-                        byte[] buffer = new byte[2048];
-                        int bytesRead = in.read(buffer);
-
-                        if (bytesRead > 0) {
-                            callback.onSuccess(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
-                        } else {
-                            callback.onSuccess("指令下发成功");
-                        }
-                    } catch (Exception e) {
-                        callback.onError("ADB 连接超时");
-                    } finally {
-                        try {
-                            if (socket != null && !socket.isClosed()) socket.close();
-                        } catch (Exception ignored) {}
-                    }
-                }).start();
-            }
-        }
-        EOF
-
-    - name: 锁定 Gradle 8.2 环境
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '8.2'
-
-    - name: 编译 Debug APK
-      run: gradle assembleDebug --stacktrace
-
-    - name: 上传 APK 产物
+    - name: 上传打包好的 APK
       uses: actions/upload-artifact@v4
       with:
         name: Topflow-Toolkit-App
