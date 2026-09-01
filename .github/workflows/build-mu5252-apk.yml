@@ -25,7 +25,7 @@ jobs:
         gradle-version: '8.2'
 
     - name: 编译 Debug APK
-      run: gradle assembleDebug --stacktrace --info
+      run: gradle assembleDebug --stacktrace 
 
     - name: 上传 APK 产物
       uses: actions/upload-artifact@v4
