@@ -19,14 +19,12 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: 强行重构项目结构与全套源码
+    - name: 强制构建完整源码与依赖
       run: |
-        # 1. 创建完整目录
         mkdir -p app/src/main/java/com/topflow/toolkit
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/res/values
 
-        # 2. 写入 settings.gradle
         cat << 'EOF' > settings.gradle
         pluginManagement {
             repositories {
@@ -46,7 +44,6 @@ jobs:
         include ':app'
         EOF
 
-        # 3. 写入 根目录 build.gradle
         cat << 'EOF' > build.gradle
         buildscript {
             repositories {
@@ -62,7 +59,6 @@ jobs:
         }
         EOF
 
-        # 4. 写入 app/build.gradle
         cat << 'EOF' > app/build.gradle
         plugins {
             id 'com.android.application'
@@ -93,7 +89,6 @@ jobs:
         }
         EOF
 
-        # 5. 写入 AndroidManifest.xml
         cat << 'EOF' > app/src/main/AndroidManifest.xml
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -116,7 +111,6 @@ jobs:
         </manifest>
         EOF
 
-        # 6. 写入 layout/activity_main.xml
         cat << 'EOF' > app/src/main/res/layout/activity_main.xml
         <?xml version="1.0" encoding="utf-8"?>
         <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -129,7 +123,6 @@ jobs:
         </RelativeLayout>
         EOF
 
-        # 7. 写入 MainActivity.java
         cat << 'EOF' > app/src/main/java/com/topflow/toolkit/MainActivity.java
         package com.topflow.toolkit;
 
@@ -198,7 +191,6 @@ jobs:
         }
         EOF
 
-        # 8. 写入 AdbManager.java
         cat << 'EOF' > app/src/main/java/com/topflow/toolkit/AdbManager.java
         package com.topflow.toolkit;
 
@@ -253,15 +245,13 @@ jobs:
         }
         EOF
 
-    - name: 初始化 Gradle 8.2 环境
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '8.2'
+    - name: 初始化并运行 Wrapper
+      run: |
+        gradle wrapper --gradle-version 8.1.1
+        chmod +x gradlew
+        ./gradlew assembleDebug --stacktrace
 
-    - name: 编译 Debug APK
-      run: gradle assembleDebug
-
-    - name: 上传打包好的 APK 产物
+    - name: 上传 APK
       uses: actions/upload-artifact@v4
       with:
         name: Topflow-Toolkit-App
