@@ -1,5 +1,6 @@
 package com.topflow.toolkit;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -17,16 +18,17 @@ public class MainActivity extends AppCompatActivity {
 
         webView = findViewById(R.id.webview);
 
-        WebSettings webSettings = webView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setDomStorageEnabled(true);
-        webSettings.setAllowFileAccess(true);
-        webSettings.setAllowContentAccess(true);
-        webSettings.setDatabaseEnabled(true);
-        webSettings.setUseWideViewPort(true);
-        webSettings.setLoadWithOverviewMode(true);
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
 
-        // 覆盖 WebViewClient 避免调用外部浏览器，并在当前应用内加载
+        // 允许 HTTP / HTTPS 混合内容（解决 Android 9+ 拦截问题）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        }
+
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -35,8 +37,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 加载目标后台地址（可根据需要替换为你设备实际的后台 IP）
-        webView.loadUrl("http://192.168.0.1");
+        // 优先加载本地 index.html 引导页，确保哪怕断网也不会白屏
+        webView.loadUrl("file:///android_asset/index.html");
     }
 
     @Override
