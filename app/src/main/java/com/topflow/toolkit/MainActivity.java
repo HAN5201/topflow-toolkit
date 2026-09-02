@@ -24,18 +24,16 @@ public class MainActivity extends AppCompatActivity {
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         
-        // 关键配置 1：允许从 file:// 跨域访问 http://
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR0) {
-            settings.setAllowUniversalAccessFromFileURLs(true);
-            settings.setAllowFileAccessFromFileURLs(true);
-        }
+        // 开启跨域访问，允许本地网页调用 HTTP 接口
+        settings.setAllowUniversalAccessFromFileURLs(true);
+        settings.setAllowFileAccessFromFileURLs(true);
 
-        // 关键配置 2：允许 HTTP 混合内容
+        // 允许 HTTP 混合内容
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
 
-        // 强制所有 URL 跳转都在内部 WebView 处理，绝不出弹窗拦截
+        // 确保页面与跳转全在 APP 内完成
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -44,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 默认直接打开 MU5252 后台地址
+        // 默认直接加载设备后台
         webView.loadUrl("http://192.168.0.1");
     }
 
