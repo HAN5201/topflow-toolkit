@@ -23,12 +23,19 @@ public class MainActivity extends AppCompatActivity {
         settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
+        
+        // 关键配置 1：允许从 file:// 跨域访问 http://
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR0) {
+            settings.setAllowUniversalAccessFromFileURLs(true);
+            settings.setAllowFileAccessFromFileURLs(true);
+        }
 
-        // 允许 HTTP / HTTPS 混合内容（解决 Android 9+ 拦截问题）
+        // 关键配置 2：允许 HTTP 混合内容
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
 
+        // 强制所有 URL 跳转都在内部 WebView 处理，绝不出弹窗拦截
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -37,8 +44,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 优先加载本地 index.html 引导页，确保哪怕断网也不会白屏
-        webView.loadUrl("file:///android_asset/index.html");
+        // 默认直接打开 MU5252 后台地址
+        webView.loadUrl("http://192.168.0.1");
     }
 
     @Override
