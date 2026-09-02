@@ -1,0 +1,46 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- 深蓝质感外框背景 -->
+    <path
+        android:fillColor="#0A0E17"
+        android:pathData="M18,0 L90,0 A18,18 0 0 1 108,18 L108,90 A18,18 0 0 1 90,108 L18,108 A18,18 0 0 1 0,90 L0,18 A18,18 0 0 1 18,0 Z" />
+    
+    <!-- 炫彩蓝科技外环 -->
+    <path
+        android:strokeColor="#00D2FF"
+        android:strokeWidth="1.5"
+        android:fillColor="#00000000"
+        android:pathData="M54,12 A42,42 0 1,1 53.9,12" />
+
+    <!-- 顶端 WiFi 信号与波束 -->
+    <path
+        android:fillColor="#00D2FF"
+        android:pathData="M54,18 A10,10 0 0,1 64,26 L61.5,28.5 A6.5,6.5 0 0,0 46.5,28.5 L44,26 A10,10 0 0,1 54,18 Z M54,23 A5,5 0 0,1 59,27 L56.5,29.5 A1.5,1.5 0 0,0 51.5,29.5 L49,27 A5,5 0 0,1 54,23 Z" />
+
+    <!-- 核心 TF 科技艺术字体造型 (亮蓝渐变视觉) -->
+    <path
+        android:fillColor="#0099FF"
+        android:pathData="M28,34 L80,34 L76,44 L54,44 L50,54 L72,54 L68,64 L46,64 L38,84 L26,84 L38,54 L34,54 L38,44 L32,44 Z" />
+    <path
+        android:fillColor="#00D2FF"
+        android:pathData="M30,34 L80,34 L78,39 L53,39 L47,54 L70,54 L68,59 L44,59 L36,80 L30,80 L40,54 L32,54 Z" />
+
+    <!-- 5G 专属标识胶囊框与文字 -->
+    <path
+        android:fillColor="#004A99"
+        android:strokeColor="#00D2FF"
+        android:strokeWidth="1"
+        android:pathData="M70,68 A10,10 0 0,1 90,68 A10,10 0 0,1 70,68 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M74,64 H80 V66 H76 V68 H80 V72 H74 Z M81,64 H87 V66 H83 V68 H87 V72 H81 Z" />
+        
+    <!-- 底部 TopFlow 字体标志 -->
+    <path
+        android:fillColor="#00D2FF"
+        android:pathData="M22,96 H26 V97 H24 V101 H22 Z M27,98 H31 V99 H29 V101 H27 Z M32,98 H36 V101 H32 Z M37,96 H41 V97 H39 V101 H37 Z M42,98 H46 V101 H42 Z M47,98 H51 V101 H47 Z" />
+</vector>
