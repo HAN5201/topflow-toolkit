@@ -2,6 +2,9 @@ package com.topflow.toolkit;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -10,6 +13,8 @@ import androidx.appcompat.app.AppCompatActivity;
 public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
+    private static final String LOCAL_URL = "file:///android_asset/login.html";
+    private static final String TARGET_URL = "http://192.168.0.1";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,24 +27,31 @@ public class MainActivity extends AppCompatActivity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(true);
-        settings.setAllowContentAccess(true);
 
-        // 允许 HTTP 混合内容
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
 
-        // 保证在 APP 内部打开网页
+        // 注入原生 JS 桥接通道，方便点击一键连接跳转
+        webView.addJavascriptInterface(new Object() {
+            @JavascriptInterface
+            public void connectDevice(String password) {
+                runOnUiThread(() -> webView.loadUrl(TARGET_URL));
+            }
+        }, "AndroidBridge");
+
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                return true;
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (request.isForMainFrame() && !view.getUrl().startsWith("file:///")) {
+                    // 当 192.168.0.1 无法连接时，自动切回本地 HTML 模板界面，保证界面不空白
+                    view.loadUrl(LOCAL_URL);
+                }
             }
         });
 
-        // 加载目标后台
-        webView.loadUrl("http://192.168.0.1");
+        // 优先尝试加载 192.168.0.1，失败则渲染本地 login.html
+        webView.loadUrl(TARGET_URL);
     }
 
     @Override
