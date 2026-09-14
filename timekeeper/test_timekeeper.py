@@ -2,6 +2,7 @@
 """Exercise real shell functions with isolated files and mocked device services."""
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -49,9 +50,9 @@ elif op == 'commit':
 else: sys.exit(2)
 ''')
         mock.chmod(0o755)
-        self.source = SOURCE
-        for path in ('/data/timekeeper', '/tmp/', '/etc/'):
-            self.source = self.source.replace(path, str(self.root) + path)
+        # Substitute once: Linux temp roots themselves start with /tmp/.
+        self.source = re.sub(r"/data/timekeeper|/tmp/|/etc/",
+                             lambda match: str(self.root) + match.group(), SOURCE)
 
     def tearDown(self):
         self.tmp.cleanup()
