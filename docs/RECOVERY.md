@@ -23,7 +23,7 @@ bind mount 接入原厂系统。普通重启会保留这些改动；后台的“
 | 3 | Mihomo Manager | `./mihomo-manager/uninstall.sh --check`<br>`./mihomo-manager/uninstall.sh` | 移除厂商 WebUI 中的管理页、RPC 与 ACL |
 | 4 | Mihomo 网关 | `./mihomo-netns/uninstall.sh --check`<br>`./mihomo-netns/uninstall.sh` | 撤销 DHCP Option 3/6、namespace、虚拟接口和 host 规则 |
 | 5 | MULTIWAN 调优 | `./mwan3-tuning/uninstall.sh --check`<br>`./mwan3-tuning/uninstall.sh` | 恢复厂商生成脚本路径、原探测目标与 hotplug 行为 |
-| 6 | Timekeeper | `./timekeeper/uninstall.sh --check`<br>`./timekeeper/uninstall.sh` | 移除可信时间偏移和启动 watcher；下次启动恢复原厂联网校时 |
+| 6 | Timekeeper | `./timekeeper/uninstall.sh --check`<br>`./timekeeper/uninstall.sh` | 按归属标记移除可信时间偏移和 watcher，恢复组件管理的时区配置及链接；下次启动恢复原厂联网校时 |
 
 WebUI 菜单必须先于 Mihomo Manager 卸载，因为它可能叠在 Manager 的 Web 文件
 bind mount 上。Mihomo Manager 应先于 Mihomo 网关卸载，避免管理页继续指向已删除的
