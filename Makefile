@@ -42,6 +42,7 @@ boot-hook-check:
 	@./tests/boot-hooks.sh
 
 timekeeper-check:
+	python3 $(TIMEKEEPER_DIR)/test_timekeeper.py
 	@mkdir -p $(BUILD_DIR)
 	$(CC) -std=c11 -Os -Wall -Wextra -Werror \
 		-o $(BUILD_DIR)/time-genoff-host $(TIMEKEEPER_DIR)/time-genoff.c \

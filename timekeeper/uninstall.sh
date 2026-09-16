@@ -31,6 +31,9 @@ fi
     set -eu
     chmod 0755 /tmp/remove-timekeeper-boot-hook.sh
     [ ! -x /etc/init.d/timekeeper ] || /etc/init.d/timekeeper stop 2>/dev/null || true
+    if [ -f /data/timekeeper/localtime-zone ] || [ -f /data/timekeeper/timezone-managed ]; then
+        /data/timekeeper/timekeeper.sh restore-timezone
+    fi
     /tmp/remove-timekeeper-boot-hook.sh
     rm -f /tmp/remove-timekeeper-boot-hook.sh
 
@@ -39,7 +42,7 @@ fi
     fi
     rm -f /etc/rc.d/S10timekeeper /etc/rc.d/K90timekeeper
     rm -f /etc/init.d/timekeeper
-    rm -f /tmp/timekeeper.log /tmp/timekeeper-synced
+    rm -f /tmp/timekeeper.log /tmp/timekeeper.log.1 /tmp/timekeeper-synced
     rmdir /tmp/timekeeper.lock 2>/dev/null || true
     rm -rf /data/timekeeper
     sync

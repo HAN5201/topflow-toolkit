@@ -76,8 +76,6 @@ marker_existed="$("$ADB_BIN" shell '[ -e /data/timekeeper/remove-ats12-on-uninst
     rm -rf '$STAGING'
 "
 
-if ! "$ADB_BIN" shell "$DEVICE_DIR/timekeeper.sh sync-now"; then
-    "$ADB_BIN" shell '/etc/init.d/timekeeper start'
-fi
+"$ADB_BIN" shell '/etc/init.d/timekeeper start'
 "$ADB_BIN" shell "$DEVICE_DIR/timekeeper.sh status; sync"
 echo "Timekeeper 已安装"
