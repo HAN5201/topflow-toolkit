@@ -86,8 +86,8 @@
 | [`mihomo-manager`](mihomo-manager/) | 将状态、模式、配置、核心更新和网络开关接入设备原生 WebUI | 实机运行 |
 | [`touchscreen-control-center`](touchscreen-control-center/) | 通过 `LD_PRELOAD` 扩展原厂 LVGL，管理三基带、Mihomo、系统、散热和 Wi-Fi | 实机运行 |
 | [`timekeeper`](timekeeper/) | 用 Qualcomm `time_genoff` 在联网前恢复可信时间，避免 1970 年阻断 TLS | 实机验证 |
-| [`mwan3-tuning`](mwan3-tuning/) | 修复普通模式规则顺序、质量探测和全局 conntrack 清理 | 底层规则实机验证；公开包装器待干净机复测 |
-| [`web-full-menu`](web-full-menu/) | 从目标设备当前文件生成完整隐藏菜单，保持登录与后端权限边界 | 同设计实机运行；公开补丁器合成测试 |
+| [`mwan3-tuning`](mwan3-tuning/) | 修复普通模式规则顺序、质量探测和全局 conntrack 清理 | 公开安装器迁移及重启实机验证 |
+| [`web-full-menu`](web-full-menu/) | 从目标设备当前文件生成完整隐藏菜单，保持登录与后端权限边界 | 公开安装器部署及重启实机验证 |
 | [`zwrt-datad-tools`](zwrt-datad-tools/) | 检查、更新、健康验证并回滚触屏所依赖的上游数据服务 | v0.9.21 实机验证 |
 
 各组件可以分别阅读和部署。触屏网络页面依赖本机 `zwrt-datad /state`，Mihomo 触屏页面依赖 `mihomo-manager`；完整菜单应安装在 Manager 之后。
@@ -140,10 +140,12 @@ make check
 helper 严格宿主编译，以及触屏注入库的严格宿主编译。面向设备的正式产物仍应使用
 AArch64 musl 环境构建。
 
-namespace、管理后端、触屏主体和 Timekeeper 来自已经在 B20 实机运行的版本；公开
-安装器也经过语法、单元测试、严格编译、AArch64 musl 构建和当前设备 Web 文件的只读
-补丁测试。尚未在另一台干净设备上重跑所有组件的安装—重启—卸载流程，因此首次部署
-仍应按实验性改机处理。
+2026-09-24 已将现有 B20 设备的自定义组件统一到本仓库源码与 AArch64 musl 构建，
+31 个受管脚本/程序逐文件校验通过。重启后验证了三路蜂窝地址/DNS、设备状态、触屏、
+Mihomo RPC、完整菜单、mwan3 wrapper 以及 SNTP 新授时事件持久化。Wi-Fi、LAN、DHCP
+与代理配置保持不变，原厂 base 1 优先、缺失才用 base 12 的恢复逻辑保持不变。
+尚未在另一台干净设备上重跑所有组件的安装—重启—卸载流程，因此首次部署仍应按
+实验性改机处理。
 
 <details>
 <summary><strong>仓库不包含什么</strong></summary>
