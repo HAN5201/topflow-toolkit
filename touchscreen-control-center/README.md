@@ -114,3 +114,13 @@ adb shell 'touch /tmp/touchui-selftest'
 - `/state` 使用一个 64 KiB 缓冲区，工作线程显式使用 256 KiB 栈；
 - 切页和锁屏会清理对象指针、页面状态和刷新 generation，避免访问已释放对象；
 - 三基带槽位编号只在展示层转换，不改写 `zwrt-datad` 原始值。
+
+### 地址诊断兼容性
+
+地址从 `interfaces.ipv4.ipv4[]` 和 `interfaces.ipv6.ipv6[]` 的首个非空条目读取，
+掩码与地址来自同一条目；DNS 仍从接口的 `dns[]` 读取。仅在地址数组字段不存在时
+兼容旧的扁平 `address`/`mask`。空数组不会回退到其他地址族或旧地址。
+
+`make touchui-check` 的状态兼容性测试覆盖实际采样函数到诊断文案的 6 个用例：
+数组结构与字段重排、旧结构、空数组、多个地址、DNS 缺失、接口断开。
+`state-compat-test --live` 在设备上输出每路地址/DNS 是否读到及实际诊断文案，不输出地址或设备标识。

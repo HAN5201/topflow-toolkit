@@ -3,6 +3,8 @@
 import json
 import os
 import re
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import subprocess
 import tempfile
@@ -135,8 +137,8 @@ elapsed=0
 cut() { echo "$elapsed"; }
 sleep() { elapsed=$((elapsed + $1)); [ "$elapsed" -lt 1900 ] || exit 0; }
 prepare_clock() { :; }
-sntp_synced() { [ "$elapsed" -ge 905 ] && { [ "$elapsed" -lt 1300 ] || [ "$elapsed" -ge 1400 ]; }; }
-sync_now() { echo "$elapsed" >>"$BASE/saves"; echo "$elapsed" >"$SYNC_MARKER"; }
+fresh_sync_event() { if [ "$elapsed" -ge 1400 ]; then echo NITZ:1400:0; elif [ "$elapsed" -ge 905 ] && [ "$elapsed" -lt 1300 ]; then echo SNTP:905:0; else return 1; fi; }
+sync_now() { echo "$elapsed" >>"$BASE/saves"; fresh_sync_event >"$EVENT_SAVED"; }
 watch_for_sync
 ''')
         saves = [int(x) for x in (self.root / 'data/timekeeper/saves').read_text().splitlines()]
@@ -146,19 +148,19 @@ watch_for_sync
 
     def test_restart_does_not_repeat_successful_save(self):
         self.run_shell('''
-echo 1789280000 >"$SYNC_MARKER"
+echo SNTP:50:0 >"$EVENT_SAVED"
 elapsed=0
 cut() { echo "$elapsed"; }
 sleep() { elapsed=$((elapsed + $1)); [ "$elapsed" -lt 1000 ] || exit 0; }
 prepare_clock() { :; }
-sntp_synced() { return 0; }
+fresh_sync_event() { echo SNTP:50:0; }
 sync_now() { echo unexpected >"$BASE/saves"; }
 watch_for_sync
 ''')
         self.assertFalse((self.root / 'data/timekeeper/saves').exists())
 
     def test_offline_never_writes_offset(self):
-        result = self.run_shell('utc_clock_ready() { return 0; }; sntp_synced() { return 1; }; sync_now', check=False)
+        result = self.run_shell('utc_clock_ready() { return 0; }; fresh_sync_event() { return 1; }; sync_now', check=False)
         self.assertEqual(result.returncode, 1)
         self.assertFalse((self.root / 'tmp/timekeeper-synced').exists())
 
@@ -182,12 +184,103 @@ watch_for_sync
         self.run_shell('apply_timezone')
         body = """
 : >"$UTC_READY"
-file_sha() { if [ "$1" = "$NTP_CLIENT" ]; then echo "$NTP_UTC_SHA"; else echo "$NTP_ORIGINAL_SHA"; fi; }
-pidof() { echo 123; }
+file_sha() {
+    case "$1" in
+        "$NTP_CLIENT"|/proc/123/exe) echo "$NTP_UTC_SHA" ;;
+        "$NWINFO") echo "$NWINFO_UTC_SHA" ;;
+        /proc/456/exe) echo "$NWINFO_ORIGINAL_SHA" ;;
+    esac
+}
+pidof() { case "$1" in ntpclient) echo 123 ;; zte_topsw_nwinfo) echo 456 ;; esac; }
 utc_clock_ready
 """
         self.assertNotEqual(self.run_shell(body, check=False).returncode, 0)
-        self.assertEqual(self.run_shell(body.replace('echo "$NTP_ORIGINAL_SHA"', 'echo "$NTP_UTC_SHA"'), check=False).returncode, 0)
+        valid_body = body.replace('echo "$NWINFO_ORIGINAL_SHA"', 'echo "$NWINFO_UTC_SHA"')
+        self.assertEqual(self.run_shell(valid_body, check=False).returncode, 0)
+        old_ntp = valid_body.replace('"$NTP_CLIENT"|/proc/123/exe)', '"$NTP_CLIENT")').replace('/proc/456/exe)', '/proc/123/exe) echo "$NTP_ORIGINAL_SHA" ;;\n        /proc/456/exe)')
+        self.assertNotEqual(self.run_shell(old_ntp, check=False).returncode, 0)
+
+    def test_success_flag_without_clock_event_cannot_persist(self):
+        result = self.run_shell("""
+utc_clock_ready() { return 0; }
+sntp_synced() { return 0; }
+fresh_sync_event() { return 1; }
+sync_now
+""", check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.root / 'tmp/timekeeper-synced').exists())
+
+    def test_nitz_and_sntp_events_both_persist_and_record_consumption(self):
+        for source in ('NITZ', 'SNTP'):
+            event_helper = self.root / 'data/timekeeper/clock-event'
+            event_helper.write_text('#!/bin/sh\necho 1790230000\n')
+            event_helper.chmod(0o755)
+            helper = self.root / 'data/timekeeper/time-genoff'
+            helper.write_text('#!/bin/sh\necho "base=12 epoch=1790230000"\n')
+            helper.chmod(0o755)
+            self.run_shell("""
+utc_clock_ready() { return 0; }
+fresh_sync_event() { echo SOURCE:100:5; }
+trusted_clock() { return 0; }
+release_rtc_service() { return 0; }
+restore_rtc_service() { return 0; }
+sync() { :; }
+sync_now
+""".replace('SOURCE', source))
+            self.assertEqual((self.root / 'tmp/timekeeper-event-saved').read_text().strip(), source + ':100:5')
+
+    def test_event_changed_while_releasing_rtc_is_rejected(self):
+        result = self.run_shell("""
+utc_clock_ready() { return 0; }
+fresh_sync_event() { [ ! -f "$BASE/changed" ] && echo NITZ:100:5; }
+trusted_clock() { return 0; }
+release_rtc_service() { touch "$BASE/changed"; }
+restore_rtc_service() { return 0; }
+sync_now
+""", check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.root / 'tmp/timekeeper-synced').exists())
+
+    def test_nitz_detach_stops_busy_process_and_restores_service(self):
+        service = self.root / 'data/timekeeper/nwinfo-service'
+        service.write_text('#!/bin/sh\ncase "$1" in\nstop) rm -f "$(dirname "$0")/running" ;;\nstart) touch "$(dirname "$0")/running" ;;\nesac\n')
+        service.chmod(0o755)
+        for unmount_fails in (False, True):
+            (self.root / 'data/timekeeper/running').touch()
+            result = self.run_shell("""
+NWINFO_INIT="$BASE/nwinfo-service"
+nitz_is_mounted() { return 0; }
+file_sha() { echo "$NWINFO_UTC_SHA"; }
+pidof() { [ -e "$BASE/running" ]; }
+umount() { [ ! -e "$BASE/running" ] || return 17; touch "$BASE/unmount-reached"; return UNMOUNT_RESULT; }
+remove_nitz_compat
+""".replace('UNMOUNT_RESULT', '1' if unmount_fails else '0'), check=False)
+            self.assertEqual(result.returncode, 1 if unmount_fails else 0)
+            self.assertTrue((self.root / 'data/timekeeper/running').exists())
+            self.assertTrue((self.root / 'data/timekeeper/unmount-reached').exists())
+            (self.root / 'data/timekeeper/unmount-reached').unlink()
+
+    def test_nitz_patch_rejects_unsupported_firmware(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('nitz_patch', Path(__file__).with_name('patch-nwinfo.py'))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with self.assertRaisesRegex(ValueError, 'unsupported'):
+            module.patch(bytes(0x40000))
+
+    def test_nitz_start_prerequisite_is_idempotent_and_reversible(self):
+        fixture = self.root / 'nwinfo.init'
+        original = '#!/bin/sh /etc/rc.common\nstart_service() {\n    procd_open_instance\n}\n'
+        fixture.write_text(original)
+        env = dict(os.environ, NWINFO_INIT=str(fixture))
+        hook = Path(__file__).with_name('nitz-boot-hook.sh')
+        for _ in range(2):
+            subprocess.run(['sh', str(hook), 'install'], env=env, check=True)
+        patched = fixture.read_text()
+        self.assertEqual(patched.count('prepare-nitz'), 1)
+        self.assertLess(patched.index('prepare-nitz'), patched.index('procd_open_instance'))
+        subprocess.run(['sh', str(hook), 'remove'], env=env, check=True)
+        self.assertEqual(fixture.read_text(), original)
 
     def test_dst_never_passes_utc_guard(self):
         self.values['zwrt_zte_sntp.settings.dst_enable'] = '1'

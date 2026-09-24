@@ -8,6 +8,36 @@ static int contains_text_ci(const char *text, const char *needle)
     return 0;
 }
 
+/* datad stores addresses as family-specific arrays of {address, mask}.
+ * Read both fields from the same entry, never from another family or child.
+ * Flat fields are accepted only when the family array is absent. */
+static void collect_interface_address(const char *interface, const char *family,
+                                      char *address, size_t size, long *mask)
+{
+    const char *p;
+    char entry[1024];
+    if (!size) return;
+    address[0] = '\0';
+    *mask = 0;
+    if (!json_value(interface, family, &p)) {
+        if (json_string(interface, "address", address, size) && address[0])
+            *mask = json_long(interface, "mask", 0);
+        return;
+    }
+    if (*p++ != '[') return;
+    for (;;) {
+        while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') p++;
+        if (*p != '{' || !copy_json_object(p, entry, sizeof(entry))) return;
+        if (json_string(entry, "address", address, size) && address[0]) {
+            *mask = json_long(entry, "mask", 0);
+            return;
+        }
+        p += strlen(entry);
+        while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') p++;
+        if (*p++ != ',') return;
+    }
+}
+
 static int collect_modem_status(const char *state, int index,
                                 struct modem_status *status)
 {
@@ -107,9 +137,9 @@ static int collect_modem_status(const char *state, int index,
             status->ipv4_up = json_bool(interface, "up", 0);
             json_string(interface, "device", status->ipv4_device,
                         sizeof(status->ipv4_device));
-            json_string(interface, "address", status->ipv4_address,
-                        sizeof(status->ipv4_address));
-            status->ipv4_mask = json_long(interface, "mask", 0);
+            collect_interface_address(interface, "ipv4", status->ipv4_address,
+                                      sizeof(status->ipv4_address),
+                                      &status->ipv4_mask);
             json_string_array_join(interface, "dns", status->ipv4_dns,
                                    sizeof(status->ipv4_dns));
         }
@@ -117,9 +147,9 @@ static int collect_modem_status(const char *state, int index,
             status->ipv6_up = json_bool(interface, "up", 0);
             json_string(interface, "device", status->ipv6_device,
                         sizeof(status->ipv6_device));
-            json_string(interface, "address", status->ipv6_address,
-                        sizeof(status->ipv6_address));
-            status->ipv6_mask = json_long(interface, "mask", 0);
+            collect_interface_address(interface, "ipv6", status->ipv6_address,
+                                      sizeof(status->ipv6_address),
+                                      &status->ipv6_mask);
             json_string_array_join(interface, "dns", status->ipv6_dns,
                                    sizeof(status->ipv6_dns));
         }
