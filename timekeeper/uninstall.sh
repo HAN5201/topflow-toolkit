@@ -26,6 +26,8 @@ if [ "$MODE" = --check ]; then
     exit
 fi
 
+"$ADB_BIN" push "$HERE/ntp-boot-hook.sh" /tmp/remove-timekeeper-ntp-hook.sh >/dev/null
+"$ADB_BIN" push "$HERE/nitz-boot-hook.sh" /tmp/remove-timekeeper-nitz-hook.sh >/dev/null
 "$ADB_BIN" push "$HERE/remove-boot-hook.sh" /tmp/remove-timekeeper-boot-hook.sh >/dev/null
 "$ADB_BIN" shell '
     set -eu
@@ -34,6 +36,13 @@ fi
     if [ -f /data/timekeeper/localtime-zone ] || [ -f /data/timekeeper/timezone-managed ]; then
         /data/timekeeper/timekeeper.sh restore-timezone
     fi
+    sh /tmp/remove-timekeeper-ntp-hook.sh remove
+    rm -f /tmp/remove-timekeeper-ntp-hook.sh
+    sh /tmp/remove-timekeeper-nitz-hook.sh remove
+    rm -f /tmp/remove-timekeeper-nitz-hook.sh
+    /data/timekeeper/timekeeper.sh remove-nitz-compat
+    /data/timekeeper/timekeeper.sh remove-ntp-compat
+    /etc/init.d/zte_topsw_ntp restart
     /tmp/remove-timekeeper-boot-hook.sh
     rm -f /tmp/remove-timekeeper-boot-hook.sh
 
@@ -44,6 +53,8 @@ fi
     rm -f /etc/init.d/timekeeper
     rm -f /tmp/timekeeper.log /tmp/timekeeper.log.1 /tmp/timekeeper-synced
     rmdir /tmp/timekeeper.lock 2>/dev/null || true
+    rm -rf /tmp/timekeeper-events
+    rm -f /tmp/timekeeper-event-saved
     rm -rf /data/timekeeper
     sync
 

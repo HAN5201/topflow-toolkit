@@ -26,10 +26,13 @@ mount_file() {
     target="$2"
     [ -f "$source" ] && [ -f "$target" ] || return 1
     if mount_present "$target"; then
-        mount_owned "$source" "$target"
-    else
-        mount --bind "$source" "$target"
+        mount_owned "$source" "$target" && return 0
+        # Only the verified, single Manager layer may sit beneath our menu.
+        [ -n "${3:-}" ] && same_inode "$3" "$target" || return 1
+        count=$(awk -v target="$target" '$2 == target { count++ } END { print count + 0 }' /proc/mounts)
+        [ "$count" -eq 1 ] || return 1
     fi
+    mount --bind "$source" "$target"
 }
 
 unmount_ours() {
@@ -41,8 +44,8 @@ unmount_ours() {
 }
 
 start() {
-    mount_file "$BASE/index.html" /usr/zte_web/web/index.html || return 1
-    mount_file "$BASE/menu.js" /usr/zte_web/web/js/config/ufi/U60Pro/menu.js || return 1
+    mount_file "$BASE/index.html" /usr/zte_web/web/index.html /data/mihomo-manager/web-root/index.html || return 1
+    mount_file "$BASE/menu.js" /usr/zte_web/web/js/config/ufi/U60Pro/menu.js /data/mihomo-manager/web-root/menu.js || return 1
     mount_file "$BASE/router.js" /usr/zte_web/web/js/router.js || return 1
     mount_file "$BASE/network_lock.html" /usr/zte_web/web/tmpl/auth/network_lock.html
 }

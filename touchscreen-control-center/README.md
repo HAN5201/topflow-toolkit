@@ -79,6 +79,10 @@ adb shell 'touch /tmp/touchui-selftest'
 
 自检通常约 20 秒；锁屏或 LCD 关闭时原厂会降低 LVGL timer 频率，最长可能接近 60 秒。完成标记写入 `/tmp/touchui-create.log`。
 
+仓库根目录的 `make touchui-check` 会执行 JSON 字段顺序、数组顺序及嵌套同名字段回归测试，并编译 `build/state-compat-test`。该工具复用触屏采样代码，可用本地私有 `/state` JSON 文件作为参数验证解析。用 AArch64 musl 工具链编译 `tests/state-compat.c`（链接 `-ldl -pthread`）并放到设备后，传入 `--live` 可直接检查本机后端；输出仅包含解析数量和检查结果，不输出设备身份。设备快照不要提交到仓库。
+
+已在 zwrt-datad v0.10.18 上验证状态解析及两个页面的实际显示。检查数据兼容性时，应同时验证触屏解析与页面，不能仅以 `/healthz`、`/state` 返回成功作为依据。
+
 ## 截图
 
 设备不提供 Android `screencap` 或传统 framebuffer。宿主机脚本会通过 root ADB
@@ -110,3 +114,13 @@ adb shell 'touch /tmp/touchui-selftest'
 - `/state` 使用一个 64 KiB 缓冲区，工作线程显式使用 256 KiB 栈；
 - 切页和锁屏会清理对象指针、页面状态和刷新 generation，避免访问已释放对象；
 - 三基带槽位编号只在展示层转换，不改写 `zwrt-datad` 原始值。
+
+### 地址诊断兼容性
+
+地址从 `interfaces.ipv4.ipv4[]` 和 `interfaces.ipv6.ipv6[]` 的首个非空条目读取，
+掩码与地址来自同一条目；DNS 仍从接口的 `dns[]` 读取。仅在地址数组字段不存在时
+兼容旧的扁平 `address`/`mask`。空数组不会回退到其他地址族或旧地址。
+
+`make touchui-check` 的状态兼容性测试覆盖实际采样函数到诊断文案的 6 个用例：
+数组结构与字段重排、旧结构、空数组、多个地址、DNS 缺失、接口断开。
+`state-compat-test --live` 在设备上输出每路地址/DNS 是否读到及实际诊断文案，不输出地址或设备标识。

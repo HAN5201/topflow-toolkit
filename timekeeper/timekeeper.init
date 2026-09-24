@@ -8,7 +8,7 @@ USE_PROCD=1
 PROG=/data/timekeeper/timekeeper.sh
 
 start_service() {
-    "$PROG" apply-timezone || logger -t timekeeper 'could not apply saved timezone'
+    "$PROG" prepare-clock || logger -t timekeeper 'UTC clock preparation failed'
     procd_open_instance
     procd_set_param command "$PROG" watch
     procd_set_param stdout 1

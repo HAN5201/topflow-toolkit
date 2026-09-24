@@ -19,7 +19,12 @@ docker run --rm --platform linux/arm64 \
     sh -c '
         apk add --no-cache build-base >/dev/null
         cc -Os -Wall -Wextra -Werror -o /tmp/time-genoff time-genoff.c -ldl
-        strip /tmp/time-genoff
+        cc -shared -fPIC -Os -Wall -Wextra -Werror -o /tmp/clock-observer.so clock-observer.c -ldl
+        cc -Os -Wall -Wextra -Werror -o /tmp/clock-event clock-event.c -lm
+        strip /tmp/time-genoff /tmp/clock-observer.so /tmp/clock-event
+        cp /tmp/clock-observer.so /tmp/clock-event /out/
+        chown "$HOST_UID:$HOST_GID" /out/clock-observer.so /out/clock-event
+        chmod 0755 /out/clock-observer.so /out/clock-event
         cp /tmp/time-genoff /out/time-genoff
         chown "$HOST_UID:$HOST_GID" /out/time-genoff
         chmod 0755 /out/time-genoff

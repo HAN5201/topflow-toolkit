@@ -80,6 +80,12 @@ start() {
     mount_one "$ACL_SOURCE" /usr/share/rpcd/acl.d || return 1
     mount_one "$JS_SOURCE" /usr/zte_web/web/js/auth/adm || return 1
     mount_one "$TMPL_SOURCE" /usr/zte_web/web/tmpl/auth/adm || return 1
+    # rpcd may have started before our executable and ACL directories mounted.
+    # Refresh it before the menu mounts, which can already be covered by the
+    # full-menu component when rc.local repeats this startup step.
+    if ! ubus list mihomo.api >/dev/null 2>&1; then
+        /etc/init.d/rpcd restart || return 1
+    fi
     mount_file "$INDEX_SOURCE" /usr/zte_web/web/index.html || return 1
     mount_file "$MENU_SOURCE" /usr/zte_web/web/js/config/ufi/U60Pro/menu.js
 }

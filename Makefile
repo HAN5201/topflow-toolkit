@@ -42,6 +42,9 @@ boot-hook-check:
 	@./tests/boot-hooks.sh
 
 timekeeper-check:
+	@mkdir -p $(BUILD_DIR)
+	$(CC) -Os -Wall -Wextra -Werror -o $(BUILD_DIR)/clock-event-test $(TIMEKEEPER_DIR)/test-clock-event.c -lm
+	$(BUILD_DIR)/clock-event-test
 	python3 $(TIMEKEEPER_DIR)/test_timekeeper.py
 	@mkdir -p $(BUILD_DIR)
 	$(CC) -std=c11 -Os -Wall -Wextra -Werror \
@@ -56,6 +59,9 @@ touchui-check:
 	$(CC) -std=c11 -Os -Wall -Wextra -Werror -Wno-unused-function \
 		-o $(BUILD_DIR)/json-key-match-test $(TOUCH_DIR)/tests/json-key-match.c
 	$(BUILD_DIR)/json-key-match-test
+	$(CC) -Os -Wall -Wextra -Werror \
+		-o $(BUILD_DIR)/state-compat-test $(TOUCH_DIR)/tests/state-compat.c $(TOUCH_LIBS)
+	$(BUILD_DIR)/state-compat-test
 
 clean:
 	@find $(BUILD_DIR) -type f -delete 2>/dev/null || true

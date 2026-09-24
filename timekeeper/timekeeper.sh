@@ -14,6 +14,17 @@ TZ_MANAGED="$BASE/timezone-managed"
 MIN_TRUSTED_EPOCH=1767225600
 MAX_TRUSTED_EPOCH=4102444800
 RTC_RESTORE=0
+NTP_CLIENT=/usr/bin/ntpclient
+NTP_LAUNCHER=/sbin/zte_ntp_cy.sh
+NTP_ORIGINAL_SHA=f0dada95771df3aec5c2d3573f1168dfe2986e934619b3696d0ea187724bbcff
+NTP_UTC_SHA=459d5d2e186aaeff1834625a14b976a18b5f8a581ce8711822aaeb4c9c80c9e1
+UTC_READY=/tmp/timekeeper-utc-ready
+NWINFO=/usr/bin/zte_topsw_nwinfo
+NWINFO_INIT=/etc/init.d/zte_topsw_nwinfo
+NWINFO_ORIGINAL_SHA=45d989f44b9a776bdbe84a2d59d8285e81ada0c18e9ae0c942c50ce99f51e4e6
+NWINFO_UTC_SHA=01b66a930931f2eb63ab693d52e10642a3a4c5d36456a4d438a010571ba7c4d3
+EVENT_HELPER="$BASE/clock-event"
+EVENT_SAVED=/tmp/timekeeper-event-saved
 
 log_message() {
     if [ -f "$LOG_FILE" ] && [ "$(wc -c <"$LOG_FILE")" -gt 65536 ]; then
@@ -142,6 +153,176 @@ restore_timezone() (
     fi
 )
 
+file_sha() {
+    sha256sum "$1" 2>/dev/null | awk '{print $1}'
+}
+
+# A bind mount leaves the read-only vendor partition untouched. Enable this
+# before S49zte_topsw_ntp; rc.local is too late for the first network sync.
+ntp_is_mounted() {
+    awk -v target="$NTP_CLIENT" '$2 == target { found=1 } END { exit !found }' /proc/mounts
+}
+
+restart_ntp_if_running() {
+    if pidof zte_topsw_ntp >/dev/null 2>&1; then
+        mode="$(ubus call zwrt_sntp get_systime_mode '{}' | jsonfilter -e '@.systime_mode' 2>/dev/null)"
+        [ "$mode" = SNTP ] || return 0
+        ubus call zwrt_sntp ntpclient_sync_rslt '{"sync":false}' >/dev/null || return 1
+        killall ntpclient 2>/dev/null || true
+        attempts=0
+        while pidof ntpclient >/dev/null 2>&1; do
+            [ "$attempts" -lt 10 ] || return 1
+            sleep 1
+            attempts=$((attempts + 1))
+        done
+        LD_PRELOAD="$BASE/clock-observer.so" nohup sh "$NTP_LAUNCHER" start >>"$LOG_FILE" 2>&1 </dev/null || return 1
+    fi
+}
+
+remove_ntp_compat() {
+    if ntp_is_mounted; then
+        [ "$(file_sha "$NTP_CLIENT")" = "$NTP_UTC_SHA" ] || return 1
+        umount "$NTP_CLIENT" || return 1
+    fi
+    rm -f "$UTC_READY" "$SYNC_MARKER"
+}
+
+nitz_is_mounted() {
+    awk -v target="$NWINFO" '$2 == target { found=1 } END { exit !found }' /proc/mounts
+}
+
+# An executing binary keeps its bind mount busy. Stop through procd before
+# detaching it, and restore a previously running service on every exit path.
+remove_nitz_compat() (
+    nitz_is_mounted || return 0
+    [ "$(file_sha "$NWINFO")" = "$NWINFO_UTC_SHA" ] || return 1
+    restore_nwinfo=0
+    trap '[ "$restore_nwinfo" -eq 0 ] || "$NWINFO_INIT" start >>"$LOG_FILE" 2>&1' EXIT
+    trap 'exit 1' HUP INT TERM
+    if pidof zte_topsw_nwinfo >/dev/null 2>&1; then
+        restore_nwinfo=1
+        "$NWINFO_INIT" stop >>"$LOG_FILE" 2>&1 || return 1
+        attempts=0
+        while pidof zte_topsw_nwinfo >/dev/null 2>&1; do
+            [ "$attempts" -lt 10 ] || return 1
+            sleep 1
+            attempts=$((attempts + 1))
+        done
+    fi
+    umount "$NWINFO" || return 1
+    if [ "$restore_nwinfo" -eq 1 ]; then
+        "$NWINFO_INIT" start >>"$LOG_FILE" 2>&1 || return 1
+        restore_nwinfo=0
+    fi
+)
+
+# Called directly by nwinfo's start_service before procd launches it. Do not
+# restart services here: this entry point must also work during early boot.
+prepare_nitz() {
+    if ! configured_timezone >/dev/null; then
+        remove_nitz_compat
+        return
+    fi
+    [ "$(file_sha "$NWINFO")" != "$NWINFO_UTC_SHA" ] || return 0
+    [ "$(file_sha "$NWINFO")" = "$NWINFO_ORIGINAL_SHA" ] || return 1
+    [ "$(file_sha "$BASE/nwinfo.utc")" = "$NWINFO_UTC_SHA" ] || return 1
+    nitz_is_mounted && return 1
+    mount -o bind "$BASE/nwinfo.utc" "$NWINFO" || return 1
+    rm -f "$SYNC_MARKER"
+    ubus call zwrt_sntp ntpclient_sync_rslt '{"sync":false}' >/dev/null 2>&1 || true
+    log_message "activated B20 UTC NITZ compatibility"
+}
+
+restart_nitz_if_stale() {
+    expected="$(file_sha "$NWINFO")"
+    case "$expected" in
+        "$NWINFO_ORIGINAL_SHA"|"$NWINFO_UTC_SHA") ;;
+        *) return 1 ;;
+    esac
+    for nw_pid in $(pidof zte_topsw_nwinfo 2>/dev/null); do
+        if [ "$(file_sha "/proc/$nw_pid/exe")" != "$expected" ] || \
+            { [ "$expected" = "$NWINFO_UTC_SHA" ] && ! observer_loaded "$nw_pid"; }; then
+            "$NWINFO_INIT" restart >>"$LOG_FILE" 2>&1 || return 1
+            log_message "restarted nwinfo to use current clock compatibility"
+            return 0
+        fi
+    done
+}
+
+observer_loaded() {
+    grep -q '/data/timekeeper/clock-observer.so$' "/proc/$1/maps" 2>/dev/null
+}
+
+ensure_ntp_observer() {
+    configured_timezone >/dev/null || return 0
+    for ntp_service_pid in $(pidof zte_topsw_ntp 2>/dev/null); do
+        if ! observer_loaded "$ntp_service_pid"; then
+            /etc/init.d/zte_topsw_ntp restart >>"$LOG_FILE" 2>&1 || return 1
+            if [ "$(uci -q get zwrt_zte_sntp.settings.time_set_mode)" = auto ]; then
+                LD_PRELOAD="$BASE/clock-observer.so" nohup sh "$NTP_LAUNCHER" restart >>"$LOG_FILE" 2>&1 </dev/null
+            fi
+            return
+        fi
+    done
+}
+
+prepare_clock() {
+    prepare_nitz || return 1
+    restart_nitz_if_stale || return 1
+    if ! configured_timezone >/dev/null; then
+        # Unimplemented DST/network-selected zones retain the factory path.
+        # They must never be persisted as though they were UTC.
+        restore_timezone || return 1
+        if ntp_is_mounted; then
+            remove_ntp_compat || return 1
+            restart_ntp_if_running || return 1
+        fi
+        return 0
+    fi
+    if [ "$(file_sha "$NTP_CLIENT")" != "$NTP_UTC_SHA" ]; then
+        [ "$(file_sha "$NTP_CLIENT")" = "$NTP_ORIGINAL_SHA" ] || return 1
+        [ "$(file_sha "$BASE/ntpclient.utc")" = "$NTP_UTC_SHA" ] || return 1
+        ntp_is_mounted && return 1
+        mount -o bind "$BASE/ntpclient.utc" "$NTP_CLIENT" || return 1
+        # A pre-upgrade success flag is not evidence of a UTC sync. Clear it
+        # and restart the old process, which still maps the original inode.
+        rm -f "$UTC_READY" "$SYNC_MARKER"
+        ubus call zwrt_sntp ntpclient_sync_rslt '{"sync":false}' >/dev/null 2>&1 || true
+        apply_timezone || return 1
+        restart_ntp_if_running || return 1
+        : >"$UTC_READY"
+        log_message "activated B20 UTC NTP compatibility; waiting for fresh SNTP"
+    fi
+    [ -f "$UTC_READY" ] || {
+        # Also recover a partial activation without trusting its old flag.
+        ubus call zwrt_sntp ntpclient_sync_rslt '{"sync":false}' >/dev/null 2>&1 || true
+        restart_ntp_if_running || return 1
+        rm -f "$SYNC_MARKER"
+        : >"$UTC_READY"
+    }
+    apply_timezone
+}
+
+utc_clock_ready() {
+    configured_timezone >/dev/null || return 1
+    [ -f "$UTC_READY" ] || return 1
+    [ "$(file_sha "$NTP_CLIENT")" = "$NTP_UTC_SHA" ] || return 1
+    [ "$(file_sha "$NWINFO")" = "$NWINFO_UTC_SHA" ] || return 1
+    [ "$(readlink /etc/localtime)" = "$BASE/localtime" ] || return 1
+    [ "$(cat "$BASE/localtime-zone" 2>/dev/null)" = "$(configured_timezone)" ] || return 1
+    # A process launched before the bind mount can still set shifted time.
+    for ntp_pid in $(pidof ntpclient 2>/dev/null); do
+        [ "$(file_sha "/proc/$ntp_pid/exe")" = "$NTP_UTC_SHA" ] || return 1
+    done
+    for nw_pid in $(pidof zte_topsw_nwinfo 2>/dev/null); do
+        [ "$(file_sha "/proc/$nw_pid/exe")" = "$NWINFO_UTC_SHA" ] || return 1
+    done
+}
+
+fresh_sync_event() {
+    "$EVENT_HELPER" 2>/dev/null
+}
+
 trusted_clock() {
     now="$(date +%s 2>/dev/null || echo 0)"
     case "$now" in
@@ -151,6 +332,7 @@ trusted_clock() {
 }
 
 sntp_synced() {
+    [ "$(ubus call zwrt_sntp get_systime_mode '{}' 2>/dev/null | jsonfilter -e '@.systime_mode' 2>/dev/null)" = SNTP ] || return 1
     ubus call zwrt_sntp get_sync_state '{}' 2>/dev/null \
         | jsonfilter -e '@.sntp_syn_done' 2>/dev/null \
         | grep -qx 1
@@ -194,8 +376,12 @@ release_rtc_service() {
 }
 
 sync_now() (
-    sntp_synced || {
-        log_message "SNTP has not completed; persistent time was not changed"
+    utc_clock_ready || {
+        log_message "UTC NTP compatibility is not active; persistent time was not changed"
+        return 1
+    }
+    event="$(fresh_sync_event)" || {
+        log_message "no fresh successful UTC clock event; persistent time was not changed"
         return 1
     }
     trusted_clock || {
@@ -214,7 +400,9 @@ sync_now() (
         return 1
     fi
 
-    epoch="$(date +%s)"
+    [ "$(fresh_sync_event)" = "$event" ] || return 1
+
+    epoch="$("$EVENT_HELPER" epoch)" || return 1
     if ! "$HELPER" set "$epoch" >>"$LOG_FILE" 2>&1; then
         log_message "time_genoff SET failed"
         return 1
@@ -244,14 +432,16 @@ sync_now() (
         log_message "trusted time was saved but the vendor RTC service did not recover"
         return 1
     fi
+    [ "$(fresh_sync_event)" = "$event" ] || return 1
     printf '%s\n' "$readback" >"$SYNC_MARKER"
-    log_message "saved trusted time through Qualcomm time_genoff: epoch=$readback"
+    printf '%s\n' "$event" >"$EVENT_SAVED"
+    log_message "saved trusted time through Qualcomm time_genoff: epoch=$readback source=${event%%:*}"
     rmdir "$LOCK_DIR" 2>/dev/null || true
     return 0
 )
 
 boot_snapshot() {
-    apply_timezone || log_message "could not apply saved timezone"
+    prepare_clock || log_message "UTC clock preparation failed"
     boot_uptime="$(cut -d. -f1 /proc/uptime 2>/dev/null || echo unknown)"
     boot_epoch="$(date +%s 2>/dev/null || echo unknown)"
     boot_sntp="$(sntp_synced && echo yes || echo no)"
@@ -260,24 +450,18 @@ boot_snapshot() {
 }
 
 watch_for_sync() {
-    observed_unsynced=0
-    started="$(cut -d. -f1 /proc/uptime)"
     previous_state=""
     sleep 5
     while :; do
-        apply_timezone || log_message "could not apply saved timezone"
-        uptime_now="$(cut -d. -f1 /proc/uptime)"
-        if sntp_synced; then
-            state=sntp_synced
-            if { [ ! -f "$SYNC_MARKER" ] || [ "$observed_unsynced" -eq 1 ]; } \
-                && { [ "$observed_unsynced" -eq 1 ] || [ "$((uptime_now - started))" -ge 60 ]; }; then
-                if sync_now; then
-                    observed_unsynced=0
-                fi
+        prepare_clock || log_message "UTC clock preparation failed"
+        event="$(fresh_sync_event)" || event=""
+        if [ -n "$event" ]; then
+            state="trusted_${event%%:*}"
+            if [ "$(cat "$EVENT_SAVED" 2>/dev/null)" != "$event" ]; then
+                sync_now || true
             fi
         else
-            state=waiting_for_sntp
-            observed_unsynced=1
+            state=waiting_for_fresh_clock_event
         fi
         if [ "$state" != "$previous_state" ]; then
             log_message "$state"
@@ -288,6 +472,7 @@ watch_for_sync() {
 }
 
 status() {
+    printf 'utc_ntp_ready=%s\n' "$(utc_clock_ready && echo yes || echo no)"
     printf 'system_epoch=%s\n' "$(date +%s 2>/dev/null || echo unknown)"
     printf 'sntp_synced=%s\n' "$(sntp_synced && echo yes || echo no)"
     printf 'offset_file=%s\n' "$([ -f /data/time/ats_12 ] && echo present || echo absent)"
@@ -298,9 +483,15 @@ status() {
     printf 'effective_timezone=%s\n' "$(cat /etc/TZ 2>/dev/null || echo zoneinfo)"
     printf 'libc_timezone_file=%s\n' "$(readlink /etc/localtime)"
     printf 'last_saved_epoch=%s\n' "$(cat "$SYNC_MARKER" 2>/dev/null || echo none_this_boot)"
+    printf 'last_saved_event=%s\n' "$(cat "$EVENT_SAVED" 2>/dev/null || echo none_this_boot)"
 }
 
 case "${1:-status}" in
+    ensure-observer) ensure_ntp_observer ;;
+    prepare-nitz) prepare_nitz ;;
+    prepare-clock) prepare_clock ;;
+    remove-nitz-compat) remove_nitz_compat && restart_nitz_if_stale ;;
+    remove-ntp-compat) remove_ntp_compat && restart_ntp_if_running ;;
     sync-now) sync_now ;;
     watch) watch_for_sync ;;
     boot-snapshot) boot_snapshot ;;
