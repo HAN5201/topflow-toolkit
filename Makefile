@@ -56,6 +56,8 @@ touchui-check:
 	$(CC) -std=c11 -Os -Wall -Wextra -Werror -Wno-unused-function \
 		-o $(BUILD_DIR)/json-key-match-test $(TOUCH_DIR)/tests/json-key-match.c
 	$(BUILD_DIR)/json-key-match-test
+	$(CC) -Os -Wall -Wextra -Werror \
+		-o $(BUILD_DIR)/state-compat-test $(TOUCH_DIR)/tests/state-compat.c $(TOUCH_LIBS)
 
 clean:
 	@find $(BUILD_DIR) -type f -delete 2>/dev/null || true
