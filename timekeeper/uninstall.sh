@@ -26,6 +26,7 @@ if [ "$MODE" = --check ]; then
     exit
 fi
 
+"$ADB_BIN" push "$HERE/ntp-boot-hook.sh" /tmp/remove-timekeeper-ntp-hook.sh >/dev/null
 "$ADB_BIN" push "$HERE/remove-boot-hook.sh" /tmp/remove-timekeeper-boot-hook.sh >/dev/null
 "$ADB_BIN" shell '
     set -eu
@@ -34,6 +35,9 @@ fi
     if [ -f /data/timekeeper/localtime-zone ] || [ -f /data/timekeeper/timezone-managed ]; then
         /data/timekeeper/timekeeper.sh restore-timezone
     fi
+    sh /tmp/remove-timekeeper-ntp-hook.sh remove
+    rm -f /tmp/remove-timekeeper-ntp-hook.sh
+    /data/timekeeper/timekeeper.sh remove-ntp-compat
     /tmp/remove-timekeeper-boot-hook.sh
     rm -f /tmp/remove-timekeeper-boot-hook.sh
 

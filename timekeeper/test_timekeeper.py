@@ -134,7 +134,7 @@ else: sys.exit(2)
 elapsed=0
 cut() { echo "$elapsed"; }
 sleep() { elapsed=$((elapsed + $1)); [ "$elapsed" -lt 1900 ] || exit 0; }
-apply_timezone() { :; }
+prepare_clock() { :; }
 sntp_synced() { [ "$elapsed" -ge 905 ] && { [ "$elapsed" -lt 1300 ] || [ "$elapsed" -ge 1400 ]; }; }
 sync_now() { echo "$elapsed" >>"$BASE/saves"; echo "$elapsed" >"$SYNC_MARKER"; }
 watch_for_sync
@@ -150,7 +150,7 @@ echo 1789280000 >"$SYNC_MARKER"
 elapsed=0
 cut() { echo "$elapsed"; }
 sleep() { elapsed=$((elapsed + $1)); [ "$elapsed" -lt 1000 ] || exit 0; }
-apply_timezone() { :; }
+prepare_clock() { :; }
 sntp_synced() { return 0; }
 sync_now() { echo unexpected >"$BASE/saves"; }
 watch_for_sync
@@ -158,9 +158,83 @@ watch_for_sync
         self.assertFalse((self.root / 'data/timekeeper/saves').exists())
 
     def test_offline_never_writes_offset(self):
-        result = self.run_shell('sntp_synced() { return 1; }; sync_now', check=False)
+        result = self.run_shell('utc_clock_ready() { return 0; }; sntp_synced() { return 1; }; sync_now', check=False)
         self.assertEqual(result.returncode, 1)
         self.assertFalse((self.root / 'tmp/timekeeper-synced').exists())
+
+    def test_old_sntp_success_cannot_bypass_utc_guard(self):
+        result = self.run_shell('utc_clock_ready() { return 1; }; sntp_synced() { return 0; }; sync_now', check=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertFalse((self.root / 'tmp/timekeeper-synced').exists())
+        self.assertIn('UTC NTP compatibility is not active', (self.root / 'tmp/timekeeper.log').read_text())
+
+    def test_unsupported_firmware_is_not_patched(self):
+        import importlib.util
+        import sys
+        sys.dont_write_bytecode = True
+        spec = importlib.util.spec_from_file_location('ntp_patch', Path(__file__).with_name('patch-ntpclient.py'))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with self.assertRaisesRegex(ValueError, 'unsupported'):
+            module.patch(bytes(0x5000))
+
+    def test_unpatched_process_blocks_persistence(self):
+        self.run_shell('apply_timezone')
+        body = """
+: >"$UTC_READY"
+file_sha() { if [ "$1" = "$NTP_CLIENT" ]; then echo "$NTP_UTC_SHA"; else echo "$NTP_ORIGINAL_SHA"; fi; }
+pidof() { echo 123; }
+utc_clock_ready
+"""
+        self.assertNotEqual(self.run_shell(body, check=False).returncode, 0)
+        self.assertEqual(self.run_shell(body.replace('echo "$NTP_ORIGINAL_SHA"', 'echo "$NTP_UTC_SHA"'), check=False).returncode, 0)
+
+    def test_dst_never_passes_utc_guard(self):
+        self.values['zwrt_zte_sntp.settings.dst_enable'] = '1'
+        self.save()
+        result = self.run_shell(': >"$UTC_READY"; file_sha() { echo "$NTP_UTC_SHA"; }; utc_clock_ready', check=False)
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_existing_sntp_client_restarts_detached_without_waiting_for_wan_event(self):
+        body = """
+pidof() { [ "$1" = zte_topsw_ntp ]; }
+killall() { :; }
+ubus() { echo "$*" >>"$BASE/ubus-calls"; }
+jsonfilter() { cat >/dev/null; echo SNTP; }
+nohup() { echo "$*" >"$BASE/launch"; }
+restart_ntp_if_running
+"""
+        self.run_shell(body)
+        self.assertEqual((self.root / 'data/timekeeper/launch').read_text().strip(), 'sh /sbin/zte_ntp_cy.sh start')
+        self.assertIn('ntpclient_sync_rslt {"sync":false}', (self.root / 'data/timekeeper/ubus-calls').read_text())
+
+    def test_manual_mode_does_not_launch_ntp(self):
+        self.run_shell("""
+pidof() { [ "$1" = zte_topsw_ntp ]; }
+ubus() { :; }
+jsonfilter() { cat >/dev/null; echo MANUAL; }
+nohup() { echo unexpected >"$BASE/launch"; }
+restart_ntp_if_running
+""")
+        self.assertFalse((self.root / 'data/timekeeper/launch').exists())
+
+    def test_vendor_start_prerequisite_is_idempotent_and_reversible(self):
+        fixture = self.root / 'ntp.init'
+        original = '#!/bin/sh /etc/rc.common\nstart_service() {\n    procd_open_instance\n}\n'
+        fixture.write_text(original)
+        env = dict(os.environ, NTP_INIT=str(fixture))
+        hook = Path(__file__).with_name('ntp-boot-hook.sh')
+        for _ in range(2):
+            subprocess.run(['sh', str(hook), 'install'], env=env, check=True)
+        patched = fixture.read_text()
+        self.assertEqual(patched.count('prepare-clock'), 1)
+        self.assertLess(patched.index('prepare-clock'), patched.index('procd_open_instance'))
+        subprocess.run(['sh', str(hook), 'remove'], env=env, check=True)
+        self.assertEqual(fixture.read_text(), original)
+        fixture.write_text('unrecognized vendor service\n')
+        result = subprocess.run(['sh', str(hook), 'install'], env=env)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(fixture.read_text(), 'unrecognized vendor service\n')
 
 
 if __name__ == '__main__':
